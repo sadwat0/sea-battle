@@ -132,26 +132,31 @@ function attack(x, y, to) {
     }
 
     let state = field[to].matrix[x][y];
-    if (state != 0 && field != 1) {
-        return -1; // already attacked cell
+    if (state != 0 && state != 1) {
+        return 0; // already attacked cell
     }
 
+    let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${to}"]`);
     if (state == 0) {
+        cell.setAttribute('class', 'cell missed-cell');
         field[to].matrix[x][y] = 2;
-        
+    } else {
+        cell.setAttribute('class', 'cell died-ship-cell')
+        field[to].matrix[x][y] = 3;
     }
 
-    current_step ^= 1;
+    // current_step ^= 1;
+    return 1;
 }
 
 const enemy_tbody = document.querySelector('#enemy-table');
 enemy_tbody.addEventListener('click', function (e) {
     const cell = e.target.closest('td');
-    if (!cell) { return; } // Quit, not clicked on a cell
+    if (!cell) { return; } // not clicked on a cell
     let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
 
-    console.log(`Clicked at (${x}, ${y})`);
-    attack(x, y, 1);
+    let res = attack(x, y, 1);
+    console.log(`Clicked at (${x}, ${y}) - ${res}`);
 });
 
 
