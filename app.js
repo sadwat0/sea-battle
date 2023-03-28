@@ -72,7 +72,10 @@ class Field {
     constructor(owner) {
         this.ships_remained = START_SHIPS_COUNT;
         this.matrix = Array(10).fill().map(() => Array(10).fill(0));
+        this.ship_cover = Array(10).fill().map(() => Array(10).fill(-1));
         this.owner = owner;
+        this.ships_health = [];
+        this.ships_cells = [];
     }
 
     createField() {
@@ -108,11 +111,18 @@ class Field {
                     continue;
                 }
 
+                this.ships_health.push(i);
+                this.ships_cells.push([]);
+
                 // placing ship
                 for (let k = 0; k < i; k++) {
                     this.matrix[x][y] = 1;
+                    this.ships_cells[this.ships_cells.length - 1].push([x, y]);
+                    this.ship_cover[x][y] = this.ships_health.length - 1;
+
                     let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
                     cell.setAttribute('class', 'cell ship-cell');
+
                     x += DELTA_X[direction];
                     y += DELTA_Y[direction];
                 }
@@ -124,6 +134,8 @@ class Field {
 let field = [new Field(0), new Field(1)];
 field[0].createField();
 field[1].createField();
+
+console.log(field[1].ships_cells);
 
 let current_step = 0; // 0 - this player, 1 - enemy
 function attack(x, y, to) {
@@ -140,12 +152,34 @@ function attack(x, y, to) {
     if (state == 0) {
         cell.setAttribute('class', 'cell missed-cell');
         field[to].matrix[x][y] = 2;
+        current_step ^= 1;
     } else {
         cell.setAttribute('class', 'cell died-ship-cell')
         field[to].matrix[x][y] = 3;
+
+        let ship = field[to].ship_cover[x][y];
+        field[to].ships_health[ship]--;
+
+        // destroying nearby cells
+        if (field[to].ships_health[ship] == 0) {
+            for (let i = 0; i < field[to].ships_cells[ship].length; i++) {
+                let p = field[to].ships_cells[ship][i];
+
+                for (let x = Math.max(0, p[0] - 1); x <= Math.min(9, p[0] + 1); x++) {
+                    for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
+                        if (field[to].matrix[x][y] == 0) {
+                            field[to].matrix[x][y] = 4;
+                            console.log(x, y);
+
+                            let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${to}"]`);
+                            cell.setAttribute('class', 'cell died-cell');
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    // current_step ^= 1;
     return 1;
 }
 
@@ -157,6 +191,11 @@ enemy_tbody.addEventListener('click', function (e) {
 
     let res = attack(x, y, 1);
     console.log(`Clicked at (${x}, ${y}) - ${res}`);
+
+    while (current_step == 1) {
+        let x = randomNumber(0, 9), y = randomNumber(0, 9);
+        attack(x, y, 0);
+    }
 });
 
 
