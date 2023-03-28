@@ -1,0 +1,37 @@
+.battlefields {
+    align-content: center;
+}
+
+.battlefield {
+    width: 500px;
+    display: inline-block;
+    align-content: center;
+}
+
+/* #player-field {
+    margin-right: 100px;
+} */
+
+.battlefield-table {
+    position: absolute;
+    display: inline-block;
+    width: fit-content;
+    height: fit-content;
+    border: 3px solid rgb(23, 23, 23);
+}
+
+.cell {
+    height: 30px;
+    width: 30px;
+    border: 1px solid rgba(24, 147, 255, 0.25);
+    background-color: white;
+}
+
+.label-container {
+    width: 100%;
+    position: relative;
+    /* z-index: 1;
+    font-size: .8em;
+    bottom: -30px; */
+}
+
