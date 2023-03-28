@@ -284,6 +284,7 @@ window.onload = (event) => {
 
     setStatus("Ваш ход.");
 
+    /* --- Some functions --- */
     function changeShipsVisibility() {
         field[1].changeShipsVisibility();
     }
@@ -292,11 +293,13 @@ window.onload = (event) => {
     function createNewMap() {
         field[0].clearField();
         field[1].clearField();
-        
+
         field = [new Field(0), new Field(1)];
         field[0].createField(1);
         field[1].createField(0);
         setStatus("Ваш ход.");
     }
     document.getElementById('button-reload').onclick = createNewMap;
+
+
 };
