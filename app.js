@@ -1,7 +1,7 @@
 'use strict';
 
-function randomNumber(a, b) { // [a; b]
-    return Math.floor(Math.random() * (b - a + 1) + a)
+function randomNumber(a, b) { // [a; b)
+    return Math.floor(Math.random() * (b - a) + a)
 }
 
 let status_object = document.getElementById('status-message');
@@ -55,7 +55,6 @@ document.getElementById('enemy-field').appendChild(enemyBattleFieldTable);
 
 
 
-
 /* --- Main game --- */
 
 let START_SHIPS_COUNT = [0, 4, 3, 2, 1]; // START_SHIPS_COUNT[x] - count of ships len x
@@ -83,8 +82,8 @@ class Field {
     createField() {
         for (let i = 1; i < START_SHIPS_COUNT.length; i++) {
             for (let j = 0; j < START_SHIPS_COUNT[i]; j++) {
-                let x = randomNumber(0, 9), y = randomNumber(0, 9);
-                let direction = randomNumber(0, 1);
+                let x = randomNumber(0, 10), y = randomNumber(0, 10);
+                let direction = randomNumber(0, 2);
 
                 // checking this position
                 let ok = true;
@@ -137,9 +136,21 @@ let field = [new Field(0), new Field(1)];
 field[0].createField();
 field[1].createField();
 
-let current_step = 0; // 0 - this player, 1 - enemy
+let currentStep = 0; // 0 - this player, 1 - enemy
 function attack(x, y, to) {
-    if (to == current_step) {
+    /*
+        0 - not attacked
+        1 - missed
+        2 - hitted ship
+        3 - destroyed ship
+    */
+    console.log(`${x}, ${y}`);
+
+    if (x < 0 || x >= 10 || y < 0 || y >= 10) {
+        return 0;
+    }
+
+    if (to == currentStep) {
         return 0; // not our step
     }
 
@@ -152,7 +163,9 @@ function attack(x, y, to) {
     if (state == 0) {
         cell.setAttribute('class', 'cell missed-cell');
         field[to].matrix[x][y] = 2;
-        current_step ^= 1;
+        currentStep ^= 1;
+
+        return 1;
     } else {
         cell.setAttribute('class', 'cell died-ship-cell')
         field[to].matrix[x][y] = 3;
@@ -169,7 +182,7 @@ function attack(x, y, to) {
                     for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
                         if (field[to].matrix[x][y] == 0) {
                             field[to].matrix[x][y] = 4;
-                            console.log(x, y);
+                            console.log(`${x}, ${y}`);
 
                             let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${to}"]`);
                             cell.setAttribute('class', 'cell died-cell');
@@ -177,12 +190,17 @@ function attack(x, y, to) {
                     }
                 }
             }
-        }
-    }
 
-    return 1;
+            return 3;
+        }
+
+        return 2;
+    }
 }
 
+let botSteps = [];
+
+// Detecting all player clicks
 const enemy_tbody = document.querySelector('#enemy-table');
 enemy_tbody.addEventListener('click', function (e) {
     const cell = e.target.closest('td');
@@ -192,10 +210,54 @@ enemy_tbody.addEventListener('click', function (e) {
     let res = attack(x, y, 1);
     console.log(`Clicked at (${x}, ${y}) - ${res}`);
 
-    while (current_step == 1) {
-        status_object.innerHTML = "Атакует противник.";
-        let x = randomNumber(0, 9), y = randomNumber(0, 9);
-        attack(x, y, 0);
+    // Bot need to attack too
+    while (currentStep == 1) {
+        while (currentStep == 1 && botSteps.length > 0) {
+            let attacked = false;
+
+            let pastBotStep = botSteps[botSteps.length - 1];
+            let possibleSteps = [];
+            if (pastBotStep[2] == 0) {
+                possibleSteps = [
+                    [pastBotStep[0] - 1, pastBotStep[1]],
+                    [pastBotStep[0] + 1, pastBotStep[1]],
+                    [pastBotStep[0], pastBotStep[1] - 1],
+                    [pastBotStep[0], pastBotStep[1] + 1]
+                ];
+            } else {
+                possibleSteps = [
+                    [pastBotStep[0], pastBotStep[1] - 1],
+                    [pastBotStep[0], pastBotStep[1] + 1],
+                    [pastBotStep[0] - 1, pastBotStep[1]],
+                    [pastBotStep[0] + 1, pastBotStep[1]]
+                ];
+            }
+
+            console.log(possibleSteps);
+
+            for (let i = 0; i < possibleSteps.length; i++) {
+                // if we attacked already it's not our turn and we don't attack again, so we don't need to break from cycle
+                let res = attack(possibleSteps[i][0], possibleSteps[i][1], 0);
+                if (res > 0) {
+                    attacked = true;
+                }
+
+                if (res == 2) {
+                    botSteps.push([possibleSteps[i][0], possibleSteps[i][1], 
+                        (pastBotStep[i][2] == -1 ? (pastBotStep[i][2] >= 2) : pastBotStep[i][2])]);
+                }
+            }
+
+            if (!attacked) {
+                botSteps.pop();
+            }
+        }
+
+        let x = randomNumber(0, 10), y = randomNumber(0, 10);
+        let res = attack(x, y, 0);
+        if (res == 2) {
+            botSteps.push([x, y, -1]);
+        }
     }
 });
 
