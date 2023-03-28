@@ -11,6 +11,7 @@
 }
 
 .status {
+    margin-top: 10px;
     width: 400px;
     height: 60px;
     display: inline-block;
