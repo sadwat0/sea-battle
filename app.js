@@ -71,15 +71,18 @@ class Field {
     */
 
     constructor(owner) {
+        this.owner = owner;
+        this.isShipsVisible = false;
         this.ships_remained = START_SHIPS_COUNT;
         this.matrix = Array(10).fill().map(() => Array(10).fill(0));
         this.ship_cover = Array(10).fill().map(() => Array(10).fill(-1));
-        this.owner = owner;
         this.ships_health = [];
         this.ships_cells = [];
     }
 
-    createField() {
+    createField(showShips) {
+        this.isShipsVisible = showShips;
+
         for (let i = 1; i < START_SHIPS_COUNT.length; i++) {
             for (let j = 0; j < START_SHIPS_COUNT[i]; j++) {
                 let x = randomNumber(0, 10), y = randomNumber(0, 10);
@@ -121,8 +124,10 @@ class Field {
                     this.ships_cells[this.ships_cells.length - 1].push([x, y]);
                     this.ship_cover[x][y] = this.ships_health.length - 1;
 
-                    let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
-                    cell.setAttribute('class', 'cell ship-cell');
+                    if (showShips) {
+                        let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
+                        cell.setAttribute('class', 'cell ship-cell');
+                    }
 
                     x += DELTA_X[direction];
                     y += DELTA_Y[direction];
@@ -130,11 +135,33 @@ class Field {
             }
         }
     }
+
+    changeShipsVisibility() {
+        this.isShipsVisible ^= 1;
+
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                if (this.matrix[i][j] == 1) {
+                    let cell = document.querySelector(`[data-x="${i}"][data-y="${j}"][data-owner="${this.owner}"]`);
+
+                    if (this.isShipsVisible) {
+                        cell.setAttribute('class', 'cell ship-cell');
+                    } else {
+                        cell.setAttribute('class', 'cell');
+                    }
+                }
+            }
+        }
+    }
 }
 
 let field = [new Field(0), new Field(1)];
-field[0].createField();
-field[1].createField();
+field[0].createField(1);
+field[1].createField(0);
+
+function changeShipsVisibility() {
+    field[1].changeShipsVisibility();
+}
 
 let currentStep = 0; // 0 - this player, 1 - enemy
 function attack(x, y, to) {
@@ -144,8 +171,6 @@ function attack(x, y, to) {
         2 - hitted ship
         3 - destroyed ship
     */
-    console.log(`${x}, ${y}`);
-
     if (x < 0 || x >= 10 || y < 0 || y >= 10) {
         return 0;
     }
@@ -182,7 +207,6 @@ function attack(x, y, to) {
                     for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
                         if (field[to].matrix[x][y] == 0) {
                             field[to].matrix[x][y] = 4;
-                            console.log(`${x}, ${y}`);
 
                             let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${to}"]`);
                             cell.setAttribute('class', 'cell died-cell');
@@ -233,8 +257,6 @@ enemy_tbody.addEventListener('click', function (e) {
                 ];
             }
 
-            console.log(possibleSteps);
-
             for (let i = 0; i < possibleSteps.length; i++) {
                 // if we attacked already it's not our turn and we don't attack again, so we don't need to break from cycle
                 let res = attack(possibleSteps[i][0], possibleSteps[i][1], 0);
@@ -243,8 +265,11 @@ enemy_tbody.addEventListener('click', function (e) {
                 }
 
                 if (res == 2) {
+                    console.log(pastBotStep);
+                    console.log(possibleSteps[i]);
+
                     botSteps.push([possibleSteps[i][0], possibleSteps[i][1], 
-                        (pastBotStep[i][2] == -1 ? (pastBotStep[i][2] >= 2) : pastBotStep[i][2])]);
+                        (pastBotStep[2] == -1 ? (pastBotStep[2] >= 2 ? 1 : 0) : pastBotStep[2])]);
                 }
             }
 
@@ -262,3 +287,4 @@ enemy_tbody.addEventListener('click', function (e) {
 });
 
 status_object.innerHTML = "Ваш ход.";
+

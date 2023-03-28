@@ -1,3 +1,7 @@
+.game-wrap {
+    margin-left: 20px;
+}
+
 .header {
     width: 100%;
     left: 0;
@@ -7,14 +11,12 @@
 }
 
 .status {
-    padding-left: 10px;
     width: 400px;
     height: 60px;
     display: inline-block;
 }
 
 .status-message {
-    border-radius: 10px;
     background: #efefef;
     padding: .5em;
     overflow: hidden;
@@ -26,7 +28,7 @@
 }
 
 .battlefield {
-    width: 500px;
+    width: 400px;
     display: inline-block;
     align-content: center;
 }
@@ -73,3 +75,30 @@
     bottom: -30px; */
 }
 
+
+
+.button {
+    background-color: #4CAF50;
+    /* Green */
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin-top: 20px;
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+.button-hide {
+    background-color: white;
+    color: black;
+    border: 2px solid #4CAF50;
+}
+
+.button-hide:hover {
+    background-color: #4CAF50;
+    color: white;
+}
