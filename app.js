@@ -153,6 +153,66 @@ class Field {
             }
         }
     }
+
+    attack(x, y) {
+        /*
+            0 - not attacked
+            1 - missed
+            2 - hitted ship
+            3 - destroyed ship
+        */
+
+        
+        if (x < 0 || x >= 10 || y < 0 || y >= 10) {
+            return 0;
+        }
+
+        if (this.owner == currentStep) {
+            return 0; // not our step
+        }
+
+        let state = this.matrix[x][y];
+        if (state != 0 && state != 1) {
+            return 0; // already attacked cell
+        }
+
+        let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
+        if (state == 0) {
+            cell.setAttribute('class', 'cell missed-cell');
+            this.matrix[x][y] = 2;
+            currentStep ^= 1;
+
+            return 1;
+        } else {
+            cell.setAttribute('class', 'cell died-ship-cell')
+            this.matrix[x][y] = 3;
+
+            let ship = this.ship_cover[x][y];
+            this.ships_health[ship]--;
+
+            // we destroyed ship => need to destroy nearby cells
+            if (this.ships_health[ship] == 0) {
+                for (let i = 0; i < this.ships_cells[ship].length; i++) {
+                    let p = this.ships_cells[ship][i];
+
+                    for (let x = Math.max(0, p[0] - 1); x <= Math.min(9, p[0] + 1); x++) {
+                        for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
+                            if (this.matrix[x][y] == 0) {
+                                this.matrix[x][y] = 4;
+
+                                let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
+                                cell.setAttribute('class', 'cell died-cell');
+                            }
+                        }
+                    }
+                }
+
+                return 3;
+            }
+            
+            return 2;
+        }
+    }
 }
 
 let field = [new Field(0), new Field(1)];
@@ -164,65 +224,7 @@ function changeShipsVisibility() {
 }
 
 let currentStep = 0; // 0 - this player, 1 - enemy
-function attack(x, y, to) {
-    /*
-        0 - not attacked
-        1 - missed
-        2 - hitted ship
-        3 - destroyed ship
-    */
-    if (x < 0 || x >= 10 || y < 0 || y >= 10) {
-        return 0;
-    }
-
-    if (to == currentStep) {
-        return 0; // not our step
-    }
-
-    let state = field[to].matrix[x][y];
-    if (state != 0 && state != 1) {
-        return 0; // already attacked cell
-    }
-
-    let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${to}"]`);
-    if (state == 0) {
-        cell.setAttribute('class', 'cell missed-cell');
-        field[to].matrix[x][y] = 2;
-        currentStep ^= 1;
-
-        return 1;
-    } else {
-        cell.setAttribute('class', 'cell died-ship-cell')
-        field[to].matrix[x][y] = 3;
-
-        let ship = field[to].ship_cover[x][y];
-        field[to].ships_health[ship]--;
-
-        // destroying nearby cells
-        if (field[to].ships_health[ship] == 0) {
-            for (let i = 0; i < field[to].ships_cells[ship].length; i++) {
-                let p = field[to].ships_cells[ship][i];
-
-                for (let x = Math.max(0, p[0] - 1); x <= Math.min(9, p[0] + 1); x++) {
-                    for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
-                        if (field[to].matrix[x][y] == 0) {
-                            field[to].matrix[x][y] = 4;
-
-                            let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${to}"]`);
-                            cell.setAttribute('class', 'cell died-cell');
-                        }
-                    }
-                }
-            }
-
-            return 3;
-        }
-
-        return 2;
-    }
-}
-
-let botSteps = [];
+let pastBotSteps = [];
 
 // Detecting all player clicks
 const enemy_tbody = document.querySelector('#enemy-table');
@@ -231,15 +233,15 @@ enemy_tbody.addEventListener('click', function (e) {
     if (!cell) { return; } // not clicked on a cell
     let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
 
-    let res = attack(x, y, 1);
+    let res = field[1].attack(x, y);
     console.log(`Clicked at (${x}, ${y}) - ${res}`);
 
     // Bot need to attack too
     while (currentStep == 1) {
-        while (currentStep == 1 && botSteps.length > 0) {
+        while (currentStep == 1 && pastBotSteps.length > 0) {
             let attacked = false;
 
-            let pastBotStep = botSteps[botSteps.length - 1];
+            let pastBotStep = pastBotSteps[pastBotSteps.length - 1];
             let possibleSteps = [];
             if (pastBotStep[2] == 0) {
                 possibleSteps = [
@@ -259,7 +261,7 @@ enemy_tbody.addEventListener('click', function (e) {
 
             for (let i = 0; i < possibleSteps.length; i++) {
                 // if we attacked already it's not our turn and we don't attack again, so we don't need to break from cycle
-                let res = attack(possibleSteps[i][0], possibleSteps[i][1], 0);
+                let res = field[0].attack(possibleSteps[i][0], possibleSteps[i][1]);
                 if (res > 0) {
                     attacked = true;
                 }
@@ -268,20 +270,20 @@ enemy_tbody.addEventListener('click', function (e) {
                     console.log(pastBotStep);
                     console.log(possibleSteps[i]);
 
-                    botSteps.push([possibleSteps[i][0], possibleSteps[i][1], 
+                    pastBotSteps.push([possibleSteps[i][0], possibleSteps[i][1], 
                         (pastBotStep[2] == -1 ? (pastBotStep[2] >= 2 ? 1 : 0) : pastBotStep[2])]);
                 }
             }
 
             if (!attacked) {
-                botSteps.pop();
+                pastBotSteps.pop();
             }
         }
 
         let x = randomNumber(0, 10), y = randomNumber(0, 10);
-        let res = attack(x, y, 0);
+        let res = field[0].attack(x, y);
         if (res == 2) {
-            botSteps.push([x, y, -1]);
+            pastBotSteps.push([x, y, -1]);
         }
     }
 });
