@@ -33,10 +33,6 @@
     align-content: center;
 }
 
-/* #player-field {
-    margin-right: 100px;
-} */
-
 .battlefield-table {
     /* position: absolute; */
     display: inline-block;
@@ -92,13 +88,13 @@
     cursor: pointer;
 }
 
-.button-hide {
+.green-button {
     background-color: white;
     color: black;
     border: 2px solid #4CAF50;
 }
 
-.button-hide:hover {
+.green-button:hover {
     background-color: #4CAF50;
     color: white;
 }
