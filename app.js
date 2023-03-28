@@ -135,8 +135,6 @@ let field = [new Field(0), new Field(1)];
 field[0].createField();
 field[1].createField();
 
-console.log(field[1].ships_cells);
-
 let current_step = 0; // 0 - this player, 1 - enemy
 function attack(x, y, to) {
     if (to == current_step) {
@@ -198,4 +196,5 @@ enemy_tbody.addEventListener('click', function (e) {
     }
 });
 
-
+let status_object = document.getElementById('status-message');
+status_object.innerHTML = "Ваш ход.";

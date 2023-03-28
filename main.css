@@ -1,3 +1,26 @@
+.header {
+    width: 100%;
+    left: 0;
+    top: 0;
+    /* position: absolute; */
+    z-index: -1;
+}
+
+.status {
+    padding-left: 10px;
+    width: 400px;
+    height: 60px;
+    display: inline-block;
+}
+
+.status-message {
+    border-radius: 10px;
+    background: #efefef;
+    padding: .5em;
+    overflow: hidden;
+    position: relative;
+}
+
 .battlefields {
     align-content: center;
 }
@@ -13,7 +36,7 @@
 } */
 
 .battlefield-table {
-    position: absolute;
+    /* position: absolute; */
     display: inline-block;
     width: fit-content;
     height: fit-content;
