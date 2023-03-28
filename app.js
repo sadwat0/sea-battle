@@ -4,6 +4,8 @@ function randomNumber(a, b) { // [a; b]
     return Math.floor(Math.random() * (b - a + 1) + a)
 }
 
+let status_object = document.getElementById('status-message');
+
 /* --- Creating tables --- */
 
 // creating our table
@@ -191,10 +193,10 @@ enemy_tbody.addEventListener('click', function (e) {
     console.log(`Clicked at (${x}, ${y}) - ${res}`);
 
     while (current_step == 1) {
+        status_object.innerHTML = "Атакует противник.";
         let x = randomNumber(0, 9), y = randomNumber(0, 9);
         attack(x, y, 0);
     }
 });
 
-let status_object = document.getElementById('status-message');
 status_object.innerHTML = "Ваш ход.";
