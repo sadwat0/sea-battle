@@ -4,7 +4,9 @@ function randomNumber(a, b) { // [a; b]
     return Math.floor(Math.random() * (b - a + 1) + a)
 }
 
-// Creating player field
+/* --- Creating tables --- */
+
+// creating our table
 let ourBattleFieldTable = document.getElementById('self-table');
 let table1 = document.createElement('table');
 for (let i = 0; i < 10; i++) {
@@ -27,7 +29,7 @@ table1.setAttribute('cellspacing', '0');
 document.getElementById('player-field').appendChild(ourBattleFieldTable);
 
 
-// Creating enemy field
+// creating enemy table
 let enemyBattleFieldTable = document.getElementById('enemy-table');
 let table2 = document.createElement('table');
 for (let i = 0; i < 10; i++) {
@@ -50,7 +52,11 @@ table2.setAttribute('cellspacing', '0');
 document.getElementById('enemy-field').appendChild(enemyBattleFieldTable);
 
 
-let START_SHIPS_COUNT = [0, 4, 3, 2, 1];
+
+
+/* --- Main game --- */
+
+let START_SHIPS_COUNT = [0, 4, 3, 2, 1]; // START_SHIPS_COUNT[x] - count of ships len x
 let DELTA_X = [1, 0], DELTA_Y = [0, 1]; // from direction get shift
 class Field {
     /*
@@ -59,8 +65,10 @@ class Field {
             1 - placed ship
             2 - missed shoot
             3 - destroyed ship
+            4 - cell, near to destroyed ship
         }
     */
+
     constructor(owner) {
         this.ships_remained = START_SHIPS_COUNT;
         this.matrix = Array(10).fill().map(() => Array(10).fill(0));
@@ -113,8 +121,37 @@ class Field {
     }
 }
 
-let our_field = new Field(0);
-our_field.createField();
+let field = [new Field(0), new Field(1)];
+field[0].createField();
+field[1].createField();
 
-let enemy_field = new Field(1);
-enemy_field.createField();
+let current_step = 0; // 0 - this player, 1 - enemy
+function attack(x, y, to) {
+    if (to == current_step) {
+        return 0; // not our step
+    }
+
+    let state = field[to].matrix[x][y];
+    if (state != 0 && field != 1) {
+        return -1; // already attacked cell
+    }
+
+    if (state == 0) {
+        field[to].matrix[x][y] = 2;
+        
+    }
+
+    current_step ^= 1;
+}
+
+const enemy_tbody = document.querySelector('#enemy-table');
+enemy_tbody.addEventListener('click', function (e) {
+    const cell = e.target.closest('td');
+    if (!cell) { return; } // Quit, not clicked on a cell
+    let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
+
+    console.log(`Clicked at (${x}, ${y})`);
+    attack(x, y, 1);
+});
+
+

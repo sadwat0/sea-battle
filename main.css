@@ -35,6 +35,9 @@
     background-color: rgb(255, 244, 141);
 }
 .died-cell {
+    background-color: rgb(255, 157, 155);
+}
+.died-ship-cell {
     background-color: rgb(255, 90, 90);
     border: 1px solid rgba(24, 147, 255, 0.9);
 }
