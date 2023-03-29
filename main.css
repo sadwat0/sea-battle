@@ -39,10 +39,10 @@
     display: inline-block;
     width: fit-content;
     height: fit-content;
-    border: 3px solid rgb(23, 23, 23);
+    border: none;
+    /*3px solid rgb(23, 23, 23);*/
 }
 
-/* empty cell */
 .cell {
     height: 30px;
     width: 30px;
@@ -50,20 +50,20 @@
     background-color: white;
 }
 
-/* with alive ship */
 .ship-cell {
     background-color: rgb(63, 63, 63);
     border: 1px solid rgb(0, 0, 0);
 }
-/* shooted, but not to ship */
+
 .missed-cell {
     background-color: rgb(255, 244, 141);
+    background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3Csvg fill='%23000000' width='34px' height='34px' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.8 10a2.2 2.2 0 0 0 4.4 0 2.2 2.2 0 0 0-4.4 0z'/%3E%3C/svg%3E");
 }
-/* not shooted, but near to died ship */
+
 .died-cell {
-    background-color: rgb(255, 157, 155);
+    background-color: rgb(255, 157, 155) !important;
 }
-/* shooted, hitted ship */
+
 .died-ship-cell {
     background-color: rgb(255, 90, 90);
     border: 1px solid rgba(24, 147, 255, 0.9);
@@ -76,6 +76,24 @@
     font-size: .8em;
     bottom: -30px; */
 }
+
+.cell-hdr {
+    vertical-align: middle;
+    text-align: center;
+    width: 34px;
+    height: 34px;
+}
+
+.cell-border-row {
+    border-bottom: 3px solid black;
+}
+
+.cell-border-col {
+    border-right: 3px solid black;
+}
+
+
+/* Ships for dragging */
 
 .ships-collection {
     display: inline-block;

@@ -11,18 +11,42 @@ window.onload = (event) => {
     }
 
     /* --- Creating empty tables --- */
+    let hdrMarks = " abcdefghij";
     function createTable(tableName, fieldName, owner) {
         let ourBattleFieldTable = document.getElementById(tableName);
         let table1 = document.createElement('table');
-        for (let i = 0; i < 10; i++) {
-            let tr = document.createElement('tr');
-            for (let j = 0; j < 10; j++) {
-                let td = document.createElement('td');
 
-                td.setAttribute('class', 'cell');
-                td.setAttribute('data-x', i);
-                td.setAttribute('data-y', j);
-                td.setAttribute('data-owner', owner);
+        // create header
+        let trh = document.createElement('tr');
+        for (let i = 0; i <= 10; i++) {
+            let td = document.createElement('td');
+            td.setAttribute('class', 'cell-hdr');
+            if (i > 0) td.setAttribute('class', 'cell-hdr cell-border-row');
+            td.innerText = hdrMarks[i];
+            trh.append(td);
+        }
+        table1.appendChild(trh);
+
+        // create rows
+        for (let i = 1; i <= 10; i++) {
+            let tr = document.createElement('tr');
+            for (let j = 0; j <= 10; j++) {
+                let td = document.createElement('td');
+                if (j === 0) {
+                    td.setAttribute('class', 'cell-hdr cell-border-col');
+                    td.innerText = i;
+                } else {
+                    td.setAttribute('class', 'cell');
+                    td.setAttribute('data-x', i - 1);
+                    td.setAttribute('data-y', j - 1);
+                    td.setAttribute('data-owner', owner);
+                    if (j === 10) {
+                        td.classList.add("cell-border-col");
+                    }
+                    if (i === 10) {
+                        td.classList.add("cell-border-row");
+                    }
+                }
                 tr.appendChild(td);
             }
 
@@ -109,7 +133,7 @@ window.onload = (event) => {
 
                         if (showShips) {
                             let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
-                            cell.setAttribute('class', 'cell ship-cell');
+                            cell.classList.add('ship-cell');
                         }
 
                         x += DELTA_X[direction];
@@ -128,9 +152,9 @@ window.onload = (event) => {
                         let cell = document.querySelector(`[data-x="${i}"][data-y="${j}"][data-owner="${this.owner}"]`);
 
                         if (this.isShipsVisible) {
-                            cell.setAttribute('class', 'cell ship-cell');
+                            cell.classList.add('ship-cell');
                         } else {
-                            cell.setAttribute('class', 'cell');
+                            cell.classList.remove('ship-cell');
                         }
                     }
                 }
@@ -160,13 +184,15 @@ window.onload = (event) => {
 
             let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
             if (state == 0) {
-                cell.setAttribute('class', 'cell missed-cell');
+                //cell.classList.remove('died-ship-cell');
+                cell.classList.add('missed-cell');
                 this.matrix[x][y] = 2;
                 currentStep ^= 1;
 
                 return 1;
             } else {
-                cell.setAttribute('class', 'cell died-ship-cell')
+                //cell.classList.remove('missed-cell');
+                cell.classList.add('died-ship-cell')
                 this.matrix[x][y] = 3;
 
                 let ship = this.ship_cover[x][y];
@@ -179,11 +205,12 @@ window.onload = (event) => {
 
                         for (let x = Math.max(0, p[0] - 1); x <= Math.min(9, p[0] + 1); x++) {
                             for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
-                                if (this.matrix[x][y] == 0) {
+                                if (this.matrix[x][y] == 0 || this.matrix[x][y] == 2) {
                                     this.matrix[x][y] = 4;
 
                                     let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
-                                    cell.setAttribute('class', 'cell died-cell');
+                                    // cell.setAttribute('class', 'cell died-cell');
+                                    cell.classList.add('died-cell');
                                 }
                             }
                         }
@@ -206,7 +233,11 @@ window.onload = (event) => {
             for (let i = 0; i < 10; i++) {
                 for (let j = 0; j < 10; j++) {
                     let cell = document.querySelector(`[data-x="${i}"][data-y="${j}"][data-owner="${this.owner}"]`);
-                    cell.setAttribute('class', 'cell');
+                    // cell.setAttribute('class', 'cell');
+                    cell.classList.remove('died-cell');
+                    cell.classList.remove('died-ship-cell');
+                    cell.classList.remove('ship-cell');
+                    cell.classList.remove('missed-cell');
                     this.matrix[i][j] = 4;
                 }
             }
@@ -214,8 +245,8 @@ window.onload = (event) => {
     }
 
     let field = [new Field(0), new Field(1)];
-    field[0].createField(1);
-    field[1].createField(0);
+    // field[0].createField(1);
+    // field[1].createField(0);
 
     let currentStep = 0; // 0 - this player, 1 - enemy
     let pastBotSteps = [];
@@ -303,13 +334,6 @@ window.onload = (event) => {
 
 
     /* --- Dragable ships --- */
-    class Ship {
-        constructor(field) {
-            this.field = field;
-            this.dragObject = {};
-        }
-    }
-
     var DragManager = new function () {
         /**
          * составной объект для хранения информации о переносе:
@@ -386,8 +410,9 @@ window.onload = (event) => {
         }
 
         function finishDrag(e) {
-            console.log('finished dragging');
             var dropElem = findDroppable(e);
+            console.log(dragObject.elem);
+            console.log(dropElem);
 
             if (!dropElem) {
                 self.onDragCancel(dragObject);
@@ -436,7 +461,7 @@ window.onload = (event) => {
 
             // получить самый вложенный элемент под курсором мыши
             var elem = document.elementFromPoint(event.clientX, event.clientY);
-
+            
             // показать переносимый элемент обратно
             dragObject.avatar.hidden = false;
 
@@ -445,7 +470,7 @@ window.onload = (event) => {
                 return null;
             }
 
-            return elem.closest('.droppable');
+            return elem.closest('.cell');
         }
 
         document.onmousemove = onMouseMove;
