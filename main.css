@@ -77,7 +77,48 @@
     bottom: -30px; */
 }
 
+.ships-collection {
+    display: inline-block;
+    
+}
 
+.initial-ships {
+    list-style-type: none;
+}
+
+.ship {
+    display: inline-block;
+    z-index: 2;
+    left: 0;
+    top: 0;
+    border: 2px solid #00f;
+    background: rgba(0, 0, 255, .05);
+    /* position: absolute !important; */
+    margin: -2px
+}
+
+.ships-collection .ship + .ship {
+    margin-left: 10px;
+}
+.ships-row {
+    height: 50px;
+}
+.ship-1 {
+    width: 33px;
+    height: 33px;
+}
+.ship-2 {
+    width: 65px;
+    height: 33px;
+}
+.ship-3 {
+    width: 98px;
+    height: 33px;
+}
+.ship-4 {
+    width: 131px;
+    height: 33px;
+}
 
 .button {
     background-color: #4CAF50;
