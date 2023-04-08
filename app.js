@@ -543,6 +543,7 @@ window.onload = (event) => {
 
         let x = dropElem.getAttribute("data-x") - verticalShift, 
             y = dropElem.getAttribute("data-y") - horizontalShift;
+        let resultPos = getCoords(document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`));
         console.log(x, y);
 
         let isHorizontal = true;
@@ -554,7 +555,9 @@ window.onload = (event) => {
         }
 
         field[0].placeShip(cells, health);
-
         currentShip.classList.remove('draggable');
+        console.log(resultPos);
+        dragObject.avatar.style.left = resultPos.left + 2 + 'px';
+        dragObject.avatar.style.top = resultPos.top + 2 + 'px';
     };
 };
