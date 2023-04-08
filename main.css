@@ -165,3 +165,7 @@
     background-color: #4CAF50;
     color: white;
 }
+
+.draggable {
+    cursor: grab;
+}

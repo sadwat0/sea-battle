@@ -147,7 +147,26 @@ window.onload = (event) => {
             }
         }
 
+        IsCellsValid(cells) {
+            for (let k = 0; k < cells.length; k++) {
+                let cx = cells[k][0], cy = cells[k][1];
+                if (cx < 0 || cy < 0 || cx >= 10 || cy >= 10) return false;
+
+                for (let X = Math.max(0, cx - 1); X <= Math.min(9, cx + 1); X++) {
+                    for (let Y = Math.max(0, cy - 1); Y <= Math.min(9, cy + 1); Y++) {
+                        if (this.matrix[X][Y] != 0) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
         placeShip(cells, health) {
+            if (!this.IsCellsValid(cells)) return false;
+            
             this.ships_health.push(health)
             this.ships_cells.push(cells)
 
@@ -161,6 +180,8 @@ window.onload = (event) => {
                     cell.classList.add('ship-cell');
                 }
             }
+
+            return true;
         }
 
         changeShipsVisibility() {
@@ -265,9 +286,9 @@ window.onload = (event) => {
     }
 
     let field = [new Field(0), new Field(1)];
+    field[1].createField(0);
     // field[0].isShipsVisible = true;
     // field[0].createField(1);
-    // field[1].createField(0);
 
     let currentStep = 0; // 0 - this player, 1 - enemy
     let pastBotSteps = [];
@@ -314,8 +335,8 @@ window.onload = (event) => {
                     }
 
                     if (res == 2) {
-                        console.log(pastBotStep);
-                        console.log(possibleSteps[i]);
+                        // console.log(pastBotStep);
+                        // console.log(possibleSteps[i]);
 
                         pastBotSteps.push([possibleSteps[i][0], possibleSteps[i][1],
                         (pastBotStep[2] == -1 ? (pastBotStep[2] >= 2 ? 1 : 0) : pastBotStep[2])]);
@@ -356,8 +377,6 @@ window.onload = (event) => {
 
 
     let startCoords = getCoords(document.querySelector(`[data-x="1"][data-y="1"][data-owner="0"]`));
-    console.log(`startCoords: ${startCoords.left}, ${startCoords.top}`);
-
 
     /* --- Dragable ships --- */
     let DragManager = new function () {
@@ -371,11 +390,8 @@ window.onload = (event) => {
          * }
          */
         let dragObject = {};
-
         let self = this;
-
         function onMouseDown(e) {
-
             if (e.which != 1) return;
 
             let elem = e.target.closest('.draggable');
@@ -504,10 +520,9 @@ window.onload = (event) => {
         document.onmouseup = onMouseUp;
         document.onmousedown = onMouseDown;
 
-        this.onDragEnd = function(dragObject, dropElem, e) { };
+        this.onDragEnd = function (dragObject, dropElem, e) { };
         this.onDragCancel = function (dragObject) { };
     };
-
 
     function getCoords(elem) { // кроме IE8-
         let box = elem.getBoundingClientRect();
@@ -518,46 +533,108 @@ window.onload = (event) => {
         };
     }
 
-    DragManager.onDragCancel = function(dragObject) {
+    DragManager.onDragCancel = function (dragObject) {
         dragObject.avatar.rollback();
         // console.log('canceled');
     };
 
-    DragManager.onDragEnd = function(dragObject, dropElem, e) {
+    DragManager.onDragEnd = function (dragObject, dropElem, e) {
         // console.log('ended');
 
         let currentShip = dragObject.elem;
         let shipCoords = getCoords(currentShip);
 
         let X = e.clientX, Y = e.clientY;
-        console.log(X, Y);
+        // console.log(X, Y);
+        // console.log(shipCoords);
 
         let horizontalShift = Math.floor((X - shipCoords.left) / CELL_WIDTH);
         let verticalShift = Math.floor((Y - shipCoords.top) / CELL_WIDTH);
-        console.log(horizontalShift, verticalShift);
-        console.log(dropElem);
+        // console.log(horizontalShift, verticalShift);
+        // console.log(dropElem);
 
         let shipId = currentShip.id;
         let health = shipId[5];
         let cells = [];
 
-        let x = dropElem.getAttribute("data-x") - verticalShift, 
+        let x = dropElem.getAttribute("data-x") - verticalShift,
             y = dropElem.getAttribute("data-y") - horizontalShift;
         let resultPos = getCoords(document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`));
-        console.log(x, y);
+        // console.log(x, y);
 
-        let isHorizontal = true;
         for (let k = 0; k < health; k++) {
-            cells.push([x, y]);
-
-            if (isHorizontal) y++;
-            else x++;
+            cells.push([x, y++]);
         }
+
+        if (!field[0].IsCellsValid(cells)) return;
 
         field[0].placeShip(cells, health);
         currentShip.classList.remove('draggable');
-        console.log(resultPos);
         dragObject.avatar.style.left = resultPos.left + 2 + 'px';
         dragObject.avatar.style.top = resultPos.top + 2 + 'px';
+
+        let posInArrays = field[0].ships_cells.length - 1;
+        dragObject.avatar.style.cursor = 'pointer';
+
+        // rotation
+        currentShip.onclick = function() {
+            let cells = field[0].ships_cells[posInArrays];
+            if (cells.length == 1) return;
+
+            let newCells = [];
+
+            let wasHorizontal = cells[1][1] !== cells[0][1];
+            let x = cells[0][0], y = cells[0][1];
+            for (let k = 0; k < cells.length; k++) {
+                newCells.push([x, y]);
+                if (wasHorizontal) x++;
+                else y++;
+            }
+
+            console.log(cells, newCells);
+
+            for (let k = 0; k < cells.length; k++) {
+                field[0].matrix[cells[k][0]][cells[k][1]] = 0;
+            }
+
+            // we can rotate ship
+            if (field[0].IsCellsValid(newCells)) {
+                for (let k = 0; k < cells.length; k++) {
+                    if (field[0].isShipsVisible) {
+                        let cell = document.querySelector(`[data-x="${cells[k][0]}"][data-y="${cells[k][1]}"][data-owner="0"]`);
+                        cell.classList.remove('ship-cell');
+                    }
+                }
+
+                field[0].ships_cells[posInArrays] = newCells;
+                for (let k = 0; k < newCells.length; k++) {
+                    field[0].matrix[newCells[k][0]][newCells[k][1]] = 1;
+                    if (field[0].isShipsVisible) {
+                        let cell = document.querySelector(`[data-x="${newCells[k][0]}"][data-y="${newCells[k][1]}"][data-owner="0"]`);
+                        cell.classList.add('ship-cell');
+                    }
+                }
+
+                let div = currentShip, deg = wasHorizontal ? 90 : 0;
+                div.style.webkitTransform = 'rotate(' + deg + 'deg)';
+                div.style.mozTransform = 'rotate(' + deg + 'deg)';
+                div.style.msTransform = 'rotate(' + deg + 'deg)';
+                div.style.oTransform = 'rotate(' + deg + 'deg)';
+                div.style.transform = 'rotate(' + deg + 'deg)';
+
+                if (wasHorizontal) {
+                    dragObject.avatar.style.left = resultPos.left - (health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                    dragObject.avatar.style.top = resultPos.top + (health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                } else {
+                    dragObject.avatar.style.left = resultPos.left + 2 + 'px';
+                    dragObject.avatar.style.top = resultPos.top + 2 + 'px';
+                }
+            } else {
+                for (let k = 0; k < cells.length; k++) {
+                    field[0].matrix[cells[k][0]][cells[k][1]] = 1;
+                }
+            }
+        };
     };
 };
+
