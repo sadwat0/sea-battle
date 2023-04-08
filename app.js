@@ -424,7 +424,7 @@ window.onload = (event) => {
                 let moveY = e.pageY - dragObject.downY;
 
                 // если мышь передвинулась в нажатом состоянии недостаточно далеко
-                if (Math.abs(moveX) < 3 && Math.abs(moveY) < 3) {
+                if (Math.abs(moveX) < 6 && Math.abs(moveY) < 6) {
                     return;
                 }
 
@@ -502,6 +502,20 @@ window.onload = (event) => {
             document.body.appendChild(avatar);
             avatar.style.zIndex = 9999;
             avatar.style.position = 'absolute';
+
+            let shipId = dragObject.elem.getAttribute("data-id");
+            let ship = field[0].ships[shipId];
+
+            for (let i = 0; i < ship.cells.length; i++) {
+                field[0].matrix[ship.cells[i][0]][ship.cells[i][1]] = 0;
+            }
+
+            let elem = dragObject.elem;
+            elem.style.webkitTransform = 'rotate(0deg)';
+            elem.style.mozTransform = 'rotate(0deg)';
+            elem.style.msTransform = 'rotate(0deg)';
+            elem.style.oTransform = 'rotate(0deg)';
+            elem.style.transform = 'rotate(0deg)';
         }
 
         function findDroppable(event) {
@@ -581,7 +595,7 @@ window.onload = (event) => {
         if (!field[0].IsCellsValid(ship.cells)) return;
 
         field[0].placeShip(ship, shipId);
-        currentShip.classList.remove('draggable');
+        // currentShip.classList.remove('draggable');
         dragObject.avatar.style.left = resultPos.left + 2 + 'px';
         dragObject.avatar.style.top = resultPos.top + 2 + 'px';
 
