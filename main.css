@@ -46,7 +46,9 @@
 .cell {
     height: 30px;
     width: 30px;
-    border: 1px solid rgba(24, 147, 255, 0.25);
+    /* border: 1px solid rgba(24, 147, 255, 0.25); */
+    border-top: 1px solid rgba(24, 147, 255, 0.25);
+    border-left: 1px solid rgba(24, 147, 255, 0.25);
     background-color: white;
 }
 
@@ -97,7 +99,7 @@
 
 .ships-collection {
     display: inline-block;
-    
+    width: 300px;
 }
 
 .initial-ships {
@@ -122,20 +124,20 @@
     height: 50px;
 }
 .ship-1 {
-    width: 33px;
-    height: 33px;
+    width: 34px;
+    height: 34px;
 }
 .ship-2 {
-    width: 65px;
-    height: 33px;
+    width: 69px;
+    height: 34px;
 }
 .ship-3 {
-    width: 98px;
-    height: 33px;
+    width: 105px;
+    height: 34px;
 }
 .ship-4 {
-    width: 131px;
-    height: 33px;
+    width: 141px;
+    height: 34px;
 }
 
 .button {

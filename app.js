@@ -1,5 +1,7 @@
 'use strict';
 
+const CELL_WIDTH = 36;
+
 window.onload = (event) => {
     function randomNumber(a, b) { // [a; b)
         return Math.floor(Math.random() * (b - a) + a)
@@ -13,7 +15,7 @@ window.onload = (event) => {
     /* --- Creating empty tables --- */
     let hdrMarks = " abcdefghij";
     function createTable(tableName, fieldName, owner) {
-        let ourBattleFieldTable = document.getElementById(tableName);
+        let battleFieldTable = document.getElementById(tableName);
         let table1 = document.createElement('table');
 
         // create header
@@ -52,10 +54,10 @@ window.onload = (event) => {
 
             table1.appendChild(tr);
         }
-        ourBattleFieldTable.appendChild(table1);
+        battleFieldTable.appendChild(table1);
 
         table1.setAttribute('cellspacing', '0');
-        document.getElementById(fieldName).appendChild(ourBattleFieldTable);
+        document.getElementById(fieldName).appendChild(battleFieldTable);
     }
     createTable('self-table', 'self-field', 0);
     createTable('enemy-table', 'enemy-field', 1);
@@ -129,6 +131,8 @@ window.onload = (event) => {
                     for (let k = 0; k < i; k++) {
                         this.matrix[x][y] = 1;
                         this.ships_cells[this.ships_cells.length - 1].push([x, y]);
+
+                        // getting ship number in list
                         this.ship_cover[x][y] = this.ships_health.length - 1;
 
                         if (showShips) {
@@ -139,6 +143,22 @@ window.onload = (event) => {
                         x += DELTA_X[direction];
                         y += DELTA_Y[direction];
                     }
+                }
+            }
+        }
+
+        placeShip(cells, health) {
+            this.ships_health.push(health)
+            this.ships_cells.push(cells)
+
+            for (let k = 0; k < cells.length; k++) {
+                let x = cells[k][0], y = cells[k][1];
+                this.matrix[x][y] = 1;
+                this.ship_cover[x][y] = this.ships_health.length - 1;
+
+                if (this.isShipsVisible) {
+                    let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
+                    cell.classList.add('ship-cell');
                 }
             }
         }
@@ -245,6 +265,7 @@ window.onload = (event) => {
     }
 
     let field = [new Field(0), new Field(1)];
+    // field[0].isShipsVisible = true;
     // field[0].createField(1);
     // field[1].createField(0);
 
@@ -255,13 +276,14 @@ window.onload = (event) => {
     const enemy_tbody = document.querySelector('#enemy-table');
     enemy_tbody.addEventListener('click', function (e) {
         const cell = e.target.closest('td');
-        if (!cell) { return; } // not clicked on a cell
+        if (!cell) return; // not clicked on a cell
         let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
 
-        let player_step = field[1].attack(x, y);
+        let playerStepRes = field[1].attack(x, y);
         // console.log(`Clicked at (${x}, ${y}) - ${res}`);
 
-        // Bot need to attack too
+
+        // Bot needs to attack too
         while (currentStep == 1 && field[0].ships_remained && field[1].ships_remained) {
             while (currentStep == 1 && pastBotSteps.length > 0) {
                 let attacked = false;
@@ -333,8 +355,12 @@ window.onload = (event) => {
     document.getElementById('button-reload').onclick = createNewMap;
 
 
+    let startCoords = getCoords(document.querySelector(`[data-x="1"][data-y="1"][data-owner="0"]`));
+    console.log(`startCoords: ${startCoords.left}, ${startCoords.top}`);
+
+
     /* --- Dragable ships --- */
-    var DragManager = new function () {
+    let DragManager = new function () {
         /**
          * составной объект для хранения информации о переносе:
          * {
@@ -344,15 +370,15 @@ window.onload = (event) => {
          *   shiftX/shiftY - относительный сдвиг курсора от угла элемента
          * }
          */
-        var dragObject = {};
+        let dragObject = {};
 
-        var self = this;
+        let self = this;
 
         function onMouseDown(e) {
 
             if (e.which != 1) return;
 
-            var elem = e.target.closest('.draggable');
+            let elem = e.target.closest('.draggable');
             if (!elem) return;
 
             dragObject.elem = elem;
@@ -368,8 +394,8 @@ window.onload = (event) => {
             if (!dragObject.elem) return; // элемент не зажат
 
             if (!dragObject.avatar) { // если перенос не начат...
-                var moveX = e.pageX - dragObject.downX;
-                var moveY = e.pageY - dragObject.downY;
+                let moveX = e.pageX - dragObject.downX;
+                let moveY = e.pageY - dragObject.downY;
 
                 // если мышь передвинулась в нажатом состоянии недостаточно далеко
                 if (Math.abs(moveX) < 3 && Math.abs(moveY) < 3) {
@@ -385,7 +411,7 @@ window.onload = (event) => {
 
                 // аватар создан успешно
                 // создать вспомогательные свойства shiftX/shiftY
-                var coords = getCoords(dragObject.avatar);
+                let coords = getCoords(dragObject.avatar);
                 dragObject.shiftX = dragObject.downX - coords.left;
                 dragObject.shiftY = dragObject.downY - coords.top;
 
@@ -410,22 +436,19 @@ window.onload = (event) => {
         }
 
         function finishDrag(e) {
-            var dropElem = findDroppable(e);
-            console.log(dragObject.elem);
-            console.log(dropElem);
-
+            let dropElem = findDroppable(e);
             if (!dropElem) {
                 self.onDragCancel(dragObject);
             } else {
-                self.onDragEnd(dragObject, dropElem);
+                self.onDragEnd(dragObject, dropElem, e);
             }
         }
 
         function createAvatar(e) {
 
             // запомнить старые свойства, чтобы вернуться к ним при отмене переноса
-            var avatar = dragObject.elem;
-            var old = {
+            let avatar = dragObject.elem;
+            let old = {
                 parent: avatar.parentNode,
                 nextSibling: avatar.nextSibling,
                 position: avatar.position || '',
@@ -447,7 +470,7 @@ window.onload = (event) => {
         }
 
         function startDrag(e) {
-            var avatar = dragObject.avatar;
+            let avatar = dragObject.avatar;
 
             // инициировать начало переноса
             document.body.appendChild(avatar);
@@ -456,54 +479,82 @@ window.onload = (event) => {
         }
 
         function findDroppable(event) {
-            // спрячем переносимый элемент
             dragObject.avatar.hidden = true;
 
-            // получить самый вложенный элемент под курсором мыши
-            var elem = document.elementFromPoint(event.clientX, event.clientY);
-            
-            // показать переносимый элемент обратно
+            let elems = document.elementsFromPoint(event.clientX, event.clientY);
+            let elem = null;
+            elems.forEach((el, i) => {
+                if (el.classList.contains('cell')) {
+                    elem = el;
+                }
+            });
+
             dragObject.avatar.hidden = false;
 
-            if (elem == null) {
+            if (elem === null) {
                 // такое возможно, если курсор мыши "вылетел" за границу окна
                 return null;
             }
 
-            return elem.closest('.cell');
+            let res = elem.closest('.cell');
+            return res;
         }
 
         document.onmousemove = onMouseMove;
         document.onmouseup = onMouseUp;
         document.onmousedown = onMouseDown;
 
-        this.onDragEnd = function (dragObject, dropElem) { };
+        this.onDragEnd = function(dragObject, dropElem, e) { };
         this.onDragCancel = function (dragObject) { };
-
     };
 
 
     function getCoords(elem) { // кроме IE8-
-        var box = elem.getBoundingClientRect();
+        let box = elem.getBoundingClientRect();
 
         return {
-            top: box.top + pageYOffset,
-            left: box.left + pageXOffset
+            left: Math.round(box.left + pageXOffset),
+            top: Math.round(box.top + pageYOffset),
         };
-
     }
 
-    DragManager.onDragCancel = function (dragObject) {
+    DragManager.onDragCancel = function(dragObject) {
         dragObject.avatar.rollback();
-        console.log('canceled');
+        // console.log('canceled');
     };
 
-    DragManager.onDragEnd = function (dragObject, dropElem) {
-        dragObject.elem.style.display = 'none';
-        console.log('ended');
-        // dropElem.classList.add('computer-smile');
-        // setTimeout(function () {
-        //     dropElem.classList.remove('computer-smile');
-        // }, 200);
+    DragManager.onDragEnd = function(dragObject, dropElem, e) {
+        // console.log('ended');
+
+        let currentShip = dragObject.elem;
+        let shipCoords = getCoords(currentShip);
+
+        let X = e.clientX, Y = e.clientY;
+        console.log(X, Y);
+
+        let horizontalShift = Math.floor((X - shipCoords.left) / CELL_WIDTH);
+        let verticalShift = Math.floor((Y - shipCoords.top) / CELL_WIDTH);
+        console.log(horizontalShift, verticalShift);
+        console.log(dropElem);
+
+        let shipId = currentShip.id;
+        let health = shipId[5];
+        let cells = [];
+
+        let x = dropElem.getAttribute("data-x") - verticalShift, 
+            y = dropElem.getAttribute("data-y") - horizontalShift;
+        console.log(x, y);
+
+        let isHorizontal = true;
+        for (let k = 0; k < health; k++) {
+            cells.push([x, y]);
+
+            if (isHorizontal) y++;
+            else x++;
+        }
+
+        field[0].placeShip(cells, health);
+
+        currentShip.classList.remove('draggable');
     };
 };
