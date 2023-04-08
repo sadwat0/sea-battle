@@ -1,6 +1,9 @@
 'use strict';
 
 const CELL_WIDTH = 36;
+const START_SHIPS_COUNT = [0, 4, 3, 2, 1]; // START_SHIPS_COUNT[x] - count of ships len x
+const SHIPS_HEALTH = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4];
+const DELTA_X = [1, 0], DELTA_Y = [0, 1]; // from direction get shift
 
 window.onload = (event) => {
     function randomNumber(a, b) { // [a; b)
@@ -65,9 +68,6 @@ window.onload = (event) => {
 
 
     /* --- Main game --- */
-
-    let START_SHIPS_COUNT = [0, 4, 3, 2, 1]; // START_SHIPS_COUNT[x] - count of ships len x
-    let DELTA_X = [1, 0], DELTA_Y = [0, 1]; // from direction get shift
     class Field {
         /*
             this.matrix[x][y] = {
@@ -82,16 +82,25 @@ window.onload = (event) => {
         constructor(owner) {
             this.owner = owner;
             this.isShipsVisible = false;
-            this.ships_remained = START_SHIPS_COUNT.reduce((partialSum, a) => partialSum + a, 0);
+            this.ships_remained = 1 + 2 + 3 + 4;
             this.matrix = Array(10).fill().map(() => Array(10).fill(0));
             this.ship_cover = Array(10).fill().map(() => Array(10).fill(-1));
-            this.ships_health = [];
-            this.ships_cells = [];
+
+            this.ships = [];
+            for (let i = 1; i < START_SHIPS_COUNT.length; i++) {
+                for (let j = 0; j < START_SHIPS_COUNT[i]; j++) {
+                    this.ships.push({
+                        health: i,
+                        cells: []
+                    });
+                }
+            }
         }
 
         createField(showShips) {
             this.isShipsVisible = showShips;
 
+            let currentShipId = 0;
             for (let i = 1; i < START_SHIPS_COUNT.length; i++) {
                 for (let j = 0; j < START_SHIPS_COUNT[i]; j++) {
                     let x = randomNumber(0, 10), y = randomNumber(0, 10);
@@ -124,16 +133,18 @@ window.onload = (event) => {
                         continue;
                     }
 
-                    this.ships_health.push(i);
-                    this.ships_cells.push([]);
+                    let ship = {
+                        health: i,
+                        cells: []
+                    };
 
                     // placing ship
                     for (let k = 0; k < i; k++) {
                         this.matrix[x][y] = 1;
-                        this.ships_cells[this.ships_cells.length - 1].push([x, y]);
+                        ship.cells.push([x, y]);
 
                         // getting ship number in list
-                        this.ship_cover[x][y] = this.ships_health.length - 1;
+                        this.ship_cover[x][y] = currentShipId;
 
                         if (showShips) {
                             let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
@@ -143,6 +154,8 @@ window.onload = (event) => {
                         x += DELTA_X[direction];
                         y += DELTA_Y[direction];
                     }
+
+                    this.ships[currentShipId++] = ship;
                 }
             }
         }
@@ -164,16 +177,13 @@ window.onload = (event) => {
             return true;
         }
 
-        placeShip(cells, health) {
-            if (!this.IsCellsValid(cells)) return false;
+        placeShip(ship, shipId) {
+            if (!this.IsCellsValid(ship.cells)) return false;
             
-            this.ships_health.push(health)
-            this.ships_cells.push(cells)
-
-            for (let k = 0; k < cells.length; k++) {
-                let x = cells[k][0], y = cells[k][1];
+            for (let k = 0; k < ship.cells.length; k++) {
+                let x = ship.cells[k][0], y = ship.cells[k][1];
                 this.matrix[x][y] = 1;
-                this.ship_cover[x][y] = this.ships_health.length - 1;
+                this.ship_cover[x][y] = shipId;
 
                 if (this.isShipsVisible) {
                     let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
@@ -181,6 +191,7 @@ window.onload = (event) => {
                 }
             }
 
+            this.ships[shipId] = ship;
             return true;
         }
 
@@ -214,17 +225,17 @@ window.onload = (event) => {
                 return 0;
             }
 
-            if (this.owner == currentStep) {
+            if (this.owner === currentStep) {
                 return 0; // not our step
             }
 
             let state = this.matrix[x][y];
-            if (state != 0 && state != 1) {
+            if (state !== 0 && state !== 1) {
                 return 0; // already attacked cell
             }
 
             let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
-            if (state == 0) {
+            if (state === 0) {
                 //cell.classList.remove('died-ship-cell');
                 cell.classList.add('missed-cell');
                 this.matrix[x][y] = 2;
@@ -236,13 +247,14 @@ window.onload = (event) => {
                 cell.classList.add('died-ship-cell')
                 this.matrix[x][y] = 3;
 
-                let ship = this.ship_cover[x][y];
-                this.ships_health[ship]--;
+                let shipId = this.ship_cover[x][y];
+                this.ships[shipId].health--;
+                console.log(this.ships);
 
                 // we destroyed ship => need to destroy nearby cells
-                if (this.ships_health[ship] == 0) {
-                    for (let i = 0; i < this.ships_cells[ship].length; i++) {
-                        let p = this.ships_cells[ship][i];
+                if (this.ships[shipId].health == 0) {
+                    for (let i = 0; i < this.ships[shipId].cells.length; i++) {
+                        let p = this.ships[shipId].cells[i];
 
                         for (let x = Math.max(0, p[0] - 1); x <= Math.min(9, p[0] + 1); x++) {
                             for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
@@ -250,7 +262,6 @@ window.onload = (event) => {
                                     this.matrix[x][y] = 4;
 
                                     let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
-                                    // cell.setAttribute('class', 'cell died-cell');
                                     cell.classList.add('died-cell');
                                 }
                             }
@@ -259,7 +270,7 @@ window.onload = (event) => {
 
                     this.ships_remained--;
 
-                    if (this.ships_remained == 0) {
+                    if (this.ships_remained === 0) {
                         setStatus(`Победил ${(this.owner ? "игрок" : "компьютер")}.`);
                     }
 
@@ -302,7 +313,6 @@ window.onload = (event) => {
 
         let playerStepRes = field[1].attack(x, y);
         // console.log(`Clicked at (${x}, ${y}) - ${res}`);
-
 
         // Bot needs to attack too
         while (currentStep == 1 && field[0].ships_remained && field[1].ships_remained) {
@@ -553,60 +563,59 @@ window.onload = (event) => {
         // console.log(horizontalShift, verticalShift);
         // console.log(dropElem);
 
-        let shipId = currentShip.id;
-        let health = shipId[5];
-        let cells = [];
+        let shipId = dragObject.elem.getAttribute("data-id");
+        let ship = {
+            health: SHIPS_HEALTH[shipId],
+            cells: [],
+        }
 
         let x = dropElem.getAttribute("data-x") - verticalShift,
             y = dropElem.getAttribute("data-y") - horizontalShift;
         let resultPos = getCoords(document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`));
         // console.log(x, y);
 
-        for (let k = 0; k < health; k++) {
-            cells.push([x, y++]);
+        for (let k = 0; k < ship.health; k++) {
+            ship.cells.push([x, y++]);
         }
 
-        if (!field[0].IsCellsValid(cells)) return;
+        if (!field[0].IsCellsValid(ship.cells)) return;
 
-        field[0].placeShip(cells, health);
+        field[0].placeShip(ship, shipId);
         currentShip.classList.remove('draggable');
         dragObject.avatar.style.left = resultPos.left + 2 + 'px';
         dragObject.avatar.style.top = resultPos.top + 2 + 'px';
 
-        let posInArrays = field[0].ships_cells.length - 1;
         dragObject.avatar.style.cursor = 'pointer';
 
         // rotation
         currentShip.onclick = function() {
-            let cells = field[0].ships_cells[posInArrays];
-            if (cells.length == 1) return;
+            let ship = field[0].ships[shipId];
+            if (ship.cells.length == 1) return;
 
             let newCells = [];
 
-            let wasHorizontal = cells[1][1] !== cells[0][1];
-            let x = cells[0][0], y = cells[0][1];
-            for (let k = 0; k < cells.length; k++) {
+            let wasHorizontal = ship.cells[1][1] !== ship.cells[0][1];
+            let x = ship.cells[0][0], y = ship.cells[0][1];
+            for (let k = 0; k < ship.cells.length; k++) {
                 newCells.push([x, y]);
                 if (wasHorizontal) x++;
                 else y++;
             }
 
-            console.log(cells, newCells);
-
-            for (let k = 0; k < cells.length; k++) {
-                field[0].matrix[cells[k][0]][cells[k][1]] = 0;
+            for (let k = 0; k < ship.cells.length; k++) {
+                field[0].matrix[ship.cells[k][0]][ship.cells[k][1]] = 0;
             }
 
             // we can rotate ship
             if (field[0].IsCellsValid(newCells)) {
-                for (let k = 0; k < cells.length; k++) {
+                for (let k = 0; k < ship.cells.length; k++) {
                     if (field[0].isShipsVisible) {
-                        let cell = document.querySelector(`[data-x="${cells[k][0]}"][data-y="${cells[k][1]}"][data-owner="0"]`);
+                        let cell = document.querySelector(`[data-x="${ship.cells[k][0]}"][data-y="${ship.cells[k][1]}"][data-owner="0"]`);
                         cell.classList.remove('ship-cell');
                     }
                 }
-
-                field[0].ships_cells[posInArrays] = newCells;
+                
+                field[0].ships[shipId].cells = newCells;
                 for (let k = 0; k < newCells.length; k++) {
                     field[0].matrix[newCells[k][0]][newCells[k][1]] = 1;
                     if (field[0].isShipsVisible) {
@@ -615,23 +624,23 @@ window.onload = (event) => {
                     }
                 }
 
-                let div = currentShip, deg = wasHorizontal ? 90 : 0;
-                div.style.webkitTransform = 'rotate(' + deg + 'deg)';
-                div.style.mozTransform = 'rotate(' + deg + 'deg)';
-                div.style.msTransform = 'rotate(' + deg + 'deg)';
-                div.style.oTransform = 'rotate(' + deg + 'deg)';
-                div.style.transform = 'rotate(' + deg + 'deg)';
+                let deg = wasHorizontal ? 90 : 0;
+                currentShip.style.webkitTransform = 'rotate(' + deg + 'deg)';
+                currentShip.style.mozTransform = 'rotate(' + deg + 'deg)';
+                currentShip.style.msTransform = 'rotate(' + deg + 'deg)';
+                currentShip.style.oTransform = 'rotate(' + deg + 'deg)';
+                currentShip.style.transform = 'rotate(' + deg + 'deg)';
 
                 if (wasHorizontal) {
-                    dragObject.avatar.style.left = resultPos.left - (health - 1) * CELL_WIDTH / 2 + 2 + 'px';
-                    dragObject.avatar.style.top = resultPos.top + (health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                    dragObject.avatar.style.left = resultPos.left - (ship.health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                    dragObject.avatar.style.top = resultPos.top + (ship.health - 1) * CELL_WIDTH / 2 + 2 + 'px';
                 } else {
                     dragObject.avatar.style.left = resultPos.left + 2 + 'px';
                     dragObject.avatar.style.top = resultPos.top + 2 + 'px';
                 }
             } else {
-                for (let k = 0; k < cells.length; k++) {
-                    field[0].matrix[cells[k][0]][cells[k][1]] = 1;
+                for (let k = 0; k < ship.cells.length; k++) {
+                    field[0].matrix[ship.cells[k][0]][ship.cells[k][1]] = 1;
                 }
             }
         };
