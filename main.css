@@ -149,6 +149,15 @@ body {
     height: 34px;
 }
 
+.green-ship {
+    position: absolute;
+    border: 2px solid rgb(72, 255, 87);
+    background: rgba(32, 255, 50, 0.05);
+}
+.hidden {
+    display: none;
+}
+
 .button {
     background-color: #4CAF50;
     /* Green */

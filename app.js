@@ -401,6 +401,15 @@ window.onload = (event) => {
          */
         let dragObject = {};
         let self = this;
+
+        function hideGreenShip() {
+            if (dragObject.elem) {
+                let shipLength = SHIPS_HEALTH[dragObject.elem.getAttribute("data-id")];
+                let greenShip = document.getElementById(`green-ship-${shipLength}`);
+                greenShip.classList.add('hidden');
+            }
+        }
+
         function onMouseDown(e) {
             if (e.which != 1) return;
 
@@ -417,7 +426,7 @@ window.onload = (event) => {
         }
 
         function onMouseMove(e) {
-            if (!dragObject.elem) return; // элемент не зажат
+            if (!dragObject.elem) return;
 
             if (!dragObject.avatar) { // если перенос не начат...
                 let moveX = e.pageX - dragObject.downX;
@@ -448,6 +457,45 @@ window.onload = (event) => {
             dragObject.avatar.style.left = e.pageX - dragObject.shiftX + 'px';
             dragObject.avatar.style.top = e.pageY - dragObject.shiftY + 'px';
 
+            let dropElem = findDroppable(e);
+            if (dropElem && dragObject.elem) {
+                let currentShip = dragObject.elem;
+                let shipCoords = getCoords(currentShip);
+
+                let X = e.clientX, Y = e.clientY;
+
+                let horizontalShift = Math.floor((X - shipCoords.left) / CELL_WIDTH);
+                let verticalShift = Math.floor((Y - shipCoords.top) / CELL_WIDTH);
+
+                let shipLength = SHIPS_HEALTH[dragObject.elem.getAttribute("data-id")];
+
+                let x = dropElem.getAttribute("data-x") - verticalShift,
+                    y = dropElem.getAttribute("data-y") - horizontalShift;
+                let cellUnderMouse = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`);
+                if (!cellUnderMouse || dropElem.getAttribute("data-owner") == 1) {
+                    hideGreenShip();
+                    return false;
+                }
+
+                let resultPos = getCoords(cellUnderMouse);
+
+                let cells = [];
+                for (let k = 0; k < shipLength; k++)
+                    cells.push([x, y++]);
+
+                if (!field[0].IsCellsValid(cells)) {
+                    hideGreenShip();
+                    return false;
+                }
+                
+                let greenShip = document.getElementById(`green-ship-${shipLength}`);
+                greenShip.style.left = resultPos.left + 2 + 'px';
+                greenShip.style.top = resultPos.top + 2 + 'px';
+                greenShip.classList.remove('hidden');
+            } else {
+                hideGreenShip();
+            }
+
             return false;
         }
 
@@ -468,11 +516,10 @@ window.onload = (event) => {
             } else {
                 self.onDragEnd(dragObject, dropElem, e);
             }
+            hideGreenShip();
         }
 
         function createAvatar(e) {
-
-            // запомнить старые свойства, чтобы вернуться к ним при отмене переноса
             let avatar = dragObject.elem;
             let old = {
                 parent: avatar.parentNode,
@@ -483,7 +530,6 @@ window.onload = (event) => {
                 zIndex: avatar.zIndex || ''
             };
 
-            // функция для отмены переноса
             avatar.rollback = function () {
                 old.parent.insertBefore(avatar, old.nextSibling);
                 avatar.style.position = old.position;
@@ -506,9 +552,8 @@ window.onload = (event) => {
             let shipId = dragObject.elem.getAttribute("data-id");
             let ship = field[0].ships[shipId];
 
-            for (let i = 0; i < ship.cells.length; i++) {
+            for (let i = 0; i < ship.cells.length; i++)
                 field[0].matrix[ship.cells[i][0]][ship.cells[i][1]] = 0;
-            }
 
             let elem = dragObject.elem;
             elem.style.webkitTransform = 'rotate(0deg)';
@@ -531,10 +576,7 @@ window.onload = (event) => {
 
             dragObject.avatar.hidden = false;
 
-            if (elem === null) {
-                // такое возможно, если курсор мыши "вылетел" за границу окна
-                return null;
-            }
+            if (elem === null) return null;
 
             let res = elem.closest('.cell');
             return res;
@@ -559,23 +601,20 @@ window.onload = (event) => {
 
     DragManager.onDragCancel = function (dragObject) {
         dragObject.avatar.rollback();
-        // console.log('canceled');
+        if (dragObject.elem) {
+            let shipLength = SHIPS_HEALTH[dragObject.elem.getAttribute("data-id")];
+            document.getElementById(`ships-row-${shipLength}`).insertBefore(dragObject.elem, dragObject.elem.nextSibling);
+        }
     };
 
     DragManager.onDragEnd = function (dragObject, dropElem, e) {
-        // console.log('ended');
-
         let currentShip = dragObject.elem;
         let shipCoords = getCoords(currentShip);
 
         let X = e.clientX, Y = e.clientY;
-        // console.log(X, Y);
-        // console.log(shipCoords);
 
         let horizontalShift = Math.floor((X - shipCoords.left) / CELL_WIDTH);
         let verticalShift = Math.floor((Y - shipCoords.top) / CELL_WIDTH);
-        // console.log(horizontalShift, verticalShift);
-        // console.log(dropElem);
 
         let shipId = dragObject.elem.getAttribute("data-id");
         let ship = {
@@ -585,14 +624,21 @@ window.onload = (event) => {
 
         let x = dropElem.getAttribute("data-x") - verticalShift,
             y = dropElem.getAttribute("data-y") - horizontalShift;
-        let resultPos = getCoords(document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`));
-        // console.log(x, y);
-
-        for (let k = 0; k < ship.health; k++) {
-            ship.cells.push([x, y++]);
+        let cellUnderMouse = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`);
+        if (!cellUnderMouse || dropElem.getAttribute("data-owner") == 1) {
+            DragManager.onDragCancel(dragObject);
+            return;
         }
 
-        if (!field[0].IsCellsValid(ship.cells)) return;
+        let resultPos = getCoords(cellUnderMouse);
+
+        for (let k = 0; k < ship.health; k++)
+            ship.cells.push([x, y++]);
+
+        if (!field[0].IsCellsValid(ship.cells)) {
+            DragManager.onDragCancel(dragObject);
+            return;
+        }
 
         field[0].placeShip(ship, shipId);
         // currentShip.classList.remove('draggable');
