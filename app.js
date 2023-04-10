@@ -249,10 +249,9 @@ window.onload = (event) => {
 
                 let shipId = this.ship_cover[x][y];
                 this.ships[shipId].health--;
-                console.log(this.ships);
 
                 // we destroyed ship => need to destroy nearby cells
-                if (this.ships[shipId].health == 0) {
+                if (this.ships[shipId].health === 0) {
                     for (let i = 0; i < this.ships[shipId].cells.length; i++) {
                         let p = this.ships[shipId].cells[i];
 
@@ -309,10 +308,9 @@ window.onload = (event) => {
     enemy_tbody.addEventListener('click', function (e) {
         const cell = e.target.closest('td');
         if (!cell) return; // not clicked on a cell
-        let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
 
-        let playerStepRes = field[1].attack(x, y);
-        // console.log(`Clicked at (${x}, ${y}) - ${res}`);
+        let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
+        field[1].attack(x, y);
 
         // Bot needs to attack too
         while (currentStep == 1 && field[0].ships_remained && field[1].ships_remained) {
@@ -593,7 +591,7 @@ window.onload = (event) => {
         dragObject.avatar.rollback();
         if (dragObject.elem) {
             let shipLength = SHIPS_HEALTH[dragObject.elem.getAttribute("data-id")];
-            document.getElementById(`ships-row-${shipLength}`).insertBefore(dragObject.elem, dragObject.elem.nextSibling);
+            document.getElementById(`ships-row-${shipLength}`).appendChild(dragObject.elem);
         }
     };
 
@@ -689,9 +687,14 @@ window.onload = (event) => {
                     dragObject.avatar.style.top = resultPos.top + 2 + 'px';
                 }
             } else {
-                for (let k = 0; k < ship.cells.length; k++) {
+                dragObject.elem.classList.add("error-color");
+
+                for (let k = 0; k < ship.cells.length; k++)
                     field[0].matrix[ship.cells[k][0]][ship.cells[k][1]] = 1;
-                }
+
+                setTimeout(function () {
+                    dragObject.elem.classList.remove("error-color");
+                }, 500); 
             }
         };
     };

@@ -187,3 +187,15 @@ body {
 .draggable {
     cursor: grab;
 }
+
+.error-color {
+    animation-name: error-color;
+    animation-duration: 0.5s;
+}
+
+@keyframes error-color {
+    50% {
+        border-color: red;
+        background-color: rgba(255, 0, 0, 0.05);
+    }
+}
