@@ -386,8 +386,6 @@ window.onload = (event) => {
     document.getElementById('button-reload').onclick = createNewMap;
 
 
-    let startCoords = getCoords(document.querySelector(`[data-x="1"][data-y="1"][data-owner="0"]`));
-
     /* --- Dragable ships --- */
     let DragManager = new function () {
         /**
@@ -428,32 +426,27 @@ window.onload = (event) => {
         function onMouseMove(e) {
             if (!dragObject.elem) return;
 
-            if (!dragObject.avatar) { // если перенос не начат...
+            if (!dragObject.avatar) {
                 let moveX = e.pageX - dragObject.downX;
                 let moveY = e.pageY - dragObject.downY;
 
-                // если мышь передвинулась в нажатом состоянии недостаточно далеко
                 if (Math.abs(moveX) < 6 && Math.abs(moveY) < 6) {
                     return;
                 }
 
-                // начинаем перенос
-                dragObject.avatar = createAvatar(e); // создать аватар
-                if (!dragObject.avatar) { // отмена переноса, нельзя "захватить" за эту часть элемента
+                dragObject.avatar = createAvatar(e);
+                if (!dragObject.avatar) {
                     dragObject = {};
                     return;
                 }
 
-                // аватар создан успешно
-                // создать вспомогательные свойства shiftX/shiftY
                 let coords = getCoords(dragObject.avatar);
                 dragObject.shiftX = dragObject.downX - coords.left;
                 dragObject.shiftY = dragObject.downY - coords.top;
 
-                startDrag(e); // отобразить начало переноса
+                startDrag(e);
             }
 
-            // отобразить перенос объекта при каждом движении мыши
             dragObject.avatar.style.left = e.pageX - dragObject.shiftX + 'px';
             dragObject.avatar.style.top = e.pageY - dragObject.shiftY + 'px';
 
@@ -500,12 +493,9 @@ window.onload = (event) => {
         }
 
         function onMouseUp(e) {
-            if (dragObject.avatar) { // если перенос идет
+            if (dragObject.avatar)
                 finishDrag(e);
-            }
 
-            // перенос либо не начинался, либо завершился
-            // в любом случае очистим "состояние переноса" dragObject
             dragObject = {};
         }
 
@@ -590,7 +580,7 @@ window.onload = (event) => {
         this.onDragCancel = function (dragObject) { };
     };
 
-    function getCoords(elem) { // кроме IE8-
+    function getCoords(elem) {
         let box = elem.getBoundingClientRect();
 
         return {
