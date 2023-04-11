@@ -16,7 +16,7 @@ window.onload = (event) => {
     }
 
     /* --- Creating empty tables --- */
-    let hdrMarks = " abcdefghij";
+    let hdrMarks = " ABCDEFGHIJ";
     function createTable(tableName, fieldName, owner) {
         let battleFieldTable = document.getElementById(tableName);
         let table1 = document.createElement('table');
@@ -64,6 +64,17 @@ window.onload = (event) => {
     }
     createTable('self-table', 'self-field', 0);
     createTable('enemy-table', 'enemy-field', 1);
+
+    let gameStarted = 0;
+    let placedShips = 0;
+    function updatePlacedShips(cnt) {
+        placedShips = cnt;
+        let elem = document.getElementById("enemy-field"); 
+        if (placedShips == 10)
+            elem.removeAttribute('disabled');
+        else
+            elem.setAttribute('disabled', '');
+    }
 
     /* --- Main game --- */
     class Field {
@@ -243,13 +254,15 @@ window.onload = (event) => {
                     this.ships[shipId++] = ship;
                 }
             }
-        }
 
+            if (this.owner == 0) updatePlacedShips(10);
+        }
+        
         IsCellsValid(cells) {
             for (let k = 0; k < cells.length; k++) {
                 let cx = cells[k][0], cy = cells[k][1];
                 if (cx < 0 || cy < 0 || cx >= 10 || cy >= 10) return false;
-
+                
                 for (let X = Math.max(0, cx - 1); X <= Math.min(9, cx + 1); X++) {
                     for (let Y = Math.max(0, cy - 1); Y <= Math.min(9, cy + 1); Y++) {
                         if (this.matrix[X][Y] != 0) {
@@ -258,10 +271,10 @@ window.onload = (event) => {
                     }
                 }
             }
-
+            
             return true;
         }
-
+        
         placeShip(ship, shipId) {
             if (!this.IsCellsValid(ship.cells)) return false;
             
@@ -269,14 +282,15 @@ window.onload = (event) => {
                 let x = ship.cells[k][0], y = ship.cells[k][1];
                 this.matrix[x][y] = 1;
                 this.ship_cover[x][y] = shipId;
-
+                
                 if (this.isShipsVisible) {
                     let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
                     cell.classList.add('ship-cell');
                 }
             }
-
+            
             this.ships[shipId] = ship;
+            if (this.owner == 0) updatePlacedShips(placedShips + 1);
             return true;
         }
 
@@ -312,6 +326,19 @@ window.onload = (event) => {
 
             if (this.owner === currentStep) {
                 return 0; // not our step
+            }
+
+            if (this.owner === 1) {
+                if (!gameStarted) {
+                    for (let i = 0; i < 10; i++) {
+                        let elem = document.querySelector(`[data-id="${i}"]`);
+                        elem.classList.remove('draggable');
+                        elem.style.cursor = '';
+                        elem.onclick = (function() {});
+                    }
+                }
+
+                gameStarted = true;
             }
 
             let state = this.matrix[x][y];
@@ -352,6 +379,10 @@ window.onload = (event) => {
                         }
                     }
 
+                    if (this.owner === 1) {
+                        document.getElementById(`stat-ship-${shipId}`).classList.add('died-stats-ship');
+                    }
+
                     this.ships_remained--;
 
                     if (this.ships_remained === 0) {
@@ -367,8 +398,9 @@ window.onload = (event) => {
 
         clearField() {
             if (this.owner === 0) {
-                // returning all ships to the start position
+                updatePlacedShips(0);
 
+                // returning all ships to the start position
                 let ids = [
                     "ship-1-1", "ship-1-2", "ship-1-3", "ship-1-4",
                     "ship-2-1", "ship-2-2", "ship-2-3",
@@ -378,12 +410,15 @@ window.onload = (event) => {
 
                 ids.forEach((id) => {
                     let ship = document.getElementById(id);
-                    console.log(id, ship);
                     ship.style = '';
                     let to = document.getElementById(`ships-row-${id[5]}`);
                     to.appendChild(ship);
                     // ship.remove();
                 });
+            } else {
+                for (let i = 0; i < 10; i++) {
+                    document.getElementById(`stat-ship-${i}`).classList.remove('died-stats-ship');
+                }
             }
 
             for (let i = 0; i < 10; i++) {
@@ -402,6 +437,7 @@ window.onload = (event) => {
 
     let field = [new Field(0), new Field(1)];
     field[1].createRandomField(0);
+    setStatus("Расставьте корабли.");
     // field[0].isShipsVisible = true;
     // field[0].createField(1);
 
@@ -448,11 +484,8 @@ window.onload = (event) => {
                     }
 
                     if (res == 2) {
-                        // console.log(pastBotStep);
-                        // console.log(possibleSteps[i]);
-
                         pastBotSteps.push([possibleSteps[i][0], possibleSteps[i][1],
-                        (pastBotStep[2] == -1 ? (pastBotStep[2] >= 2 ? 1 : 0) : pastBotStep[2])]);
+                            (pastBotStep[2] == -1 ? (pastBotStep[2] >= 2 ? 1 : 0) : pastBotStep[2])]);
                     }
                 }
 
@@ -484,6 +517,7 @@ window.onload = (event) => {
         field = [new Field(0), new Field(1)];
         field[0].createRandomField(0);
         field[1].createRandomField(0);
+        updatePlacedShips(10);
         setStatus("Ваш ход.");
     }
     document.getElementById('button-reload').onclick = createNewMap;
@@ -648,6 +682,9 @@ window.onload = (event) => {
             for (let i = 0; i < ship.cells.length; i++)
                 field[0].matrix[ship.cells[i][0]][ship.cells[i][1]] = 0;
 
+            if (ship.cells.length)
+                updatePlacedShips(placedShips - 1);
+
             let elem = dragObject.elem;
             elem.style.webkitTransform = 'rotate(0deg)';
             elem.style.mozTransform = 'rotate(0deg)';
@@ -695,8 +732,11 @@ window.onload = (event) => {
     DragManager.onDragCancel = function (dragObject) {
         dragObject.avatar.rollback();
         if (dragObject.elem) {
-            let shipLength = SHIPS_HEALTH[dragObject.elem.getAttribute("data-id")];
+            let shipId = dragObject.elem.getAttribute("data-id");
+            let shipLength = SHIPS_HEALTH[shipId];
             document.getElementById(`ships-row-${shipLength}`).appendChild(dragObject.elem);
+            
+            field[0].ships[shipId].cells = [];
         }
     };
 

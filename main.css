@@ -97,10 +97,14 @@ body {
 
 .cell-border-row {
     border-bottom: 3px solid black;
+    font-family: 'Inder', sans-serif;
+    font-size: 14px;
 }
 
 .cell-border-col {
     border-right: 3px solid black;
+    font-family: 'Inder', sans-serif;
+    font-size: 14px;
 }
 
 
@@ -198,4 +202,26 @@ body {
         border-color: red;
         background-color: rgba(255, 0, 0, 0.05);
     }
+}
+
+div[disabled] {
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.ships-stats {
+    position: absolute;
+    margin-top: 30px;
+}
+
+.ships-stats p {
+    padding-left: 38px;
+    font-family: 'Inder', sans-serif;
+    font-size: 14px;
+    color: rgb(29, 29, 29);
+}
+
+.died-stats-ship {
+    background: rgba(255, 0, 0, 0.15);
+    border-color: rgb(230, 70, 70);
 }
