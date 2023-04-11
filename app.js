@@ -65,8 +65,6 @@ window.onload = (event) => {
     createTable('self-table', 'self-field', 0);
     createTable('enemy-table', 'enemy-field', 1);
 
-
-
     /* --- Main game --- */
     class Field {
         /*
@@ -97,10 +95,10 @@ window.onload = (event) => {
             }
         }
 
-        createField(showShips) {
+        createRandomField(showShips) {
             this.isShipsVisible = showShips;
 
-            let currentShipId = 0;
+            let shipId = 0;
             for (let i = 1; i < START_SHIPS_COUNT.length; i++) {
                 for (let j = 0; j < START_SHIPS_COUNT[i]; j++) {
                     let x = randomNumber(0, 10), y = randomNumber(0, 10);
@@ -138,13 +136,100 @@ window.onload = (event) => {
                         cells: []
                     };
 
-                    // placing ship
+                    if (this.owner == 0) {
+                        // placing blue rectangle
+                        let currentCell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`);
+                        let resultPos = getCoords(currentCell);
+                        let shipElem = document.querySelector(`[data-id="${shipId}"]`);
+                        shipElem.style.position = 'absolute';
+                        shipElem.style.cursor = 'pointer';   
+                        if (direction == 1) {
+                            shipElem.style.left = resultPos.left + 2 + 'px';
+                            shipElem.style.top = resultPos.top + 2 + 'px';
+                        } else {
+                            shipElem.style.webkitTransform = 'rotate(90deg)';
+                            shipElem.style.mozTransform = 'rotate(90deg)';
+                            shipElem.style.msTransform = 'rotate(90deg)';
+                            shipElem.style.oTransform = 'rotate(90deg)';
+                            shipElem.style.transform = 'rotate(90deg)';
+
+                            shipElem.style.left = resultPos.left - (ship.health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                            shipElem.style.top = resultPos.top + (ship.health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                        }
+
+                        document.body.appendChild(shipElem);
+
+                        let wasId = shipId;
+                        shipElem.onclick = function () {
+                            let ship = field[0].ships[wasId];
+                            if (ship.cells.length == 1) return;
+
+                            let newCells = [];
+
+                            let wasHorizontal = ship.cells[1][1] !== ship.cells[0][1];
+                            let x = ship.cells[0][0], y = ship.cells[0][1];
+                            for (let k = 0; k < ship.cells.length; k++) {
+                                newCells.push([x, y]);
+                                if (wasHorizontal) x++;
+                                else y++;
+                            }
+
+                            for (let k = 0; k < ship.cells.length; k++) {
+                                field[0].matrix[ship.cells[k][0]][ship.cells[k][1]] = 0;
+                            }
+
+                            // we can rotate ship
+                            if (field[0].IsCellsValid(newCells)) {
+                                for (let k = 0; k < ship.cells.length; k++) {
+                                    if (field[0].isShipsVisible) {
+                                        let cell = document.querySelector(`[data-x="${ship.cells[k][0]}"][data-y="${ship.cells[k][1]}"][data-owner="0"]`);
+                                        cell.classList.remove('ship-cell');
+                                    }
+                                }
+
+                                field[0].ships[wasId].cells = newCells;
+                                for (let k = 0; k < newCells.length; k++) {
+                                    field[0].matrix[newCells[k][0]][newCells[k][1]] = 1;
+                                    if (field[0].isShipsVisible) {
+                                        let cell = document.querySelector(`[data-x="${newCells[k][0]}"][data-y="${newCells[k][1]}"][data-owner="0"]`);
+                                        cell.classList.add('ship-cell');
+                                    }
+                                }
+
+                                let deg = wasHorizontal ? 90 : 0;
+                                shipElem.style.webkitTransform = 'rotate(' + deg + 'deg)';
+                                shipElem.style.mozTransform = 'rotate(' + deg + 'deg)';
+                                shipElem.style.msTransform = 'rotate(' + deg + 'deg)';
+                                shipElem.style.oTransform = 'rotate(' + deg + 'deg)';
+                                shipElem.style.transform = 'rotate(' + deg + 'deg)';
+
+                                if (wasHorizontal) {
+                                    shipElem.style.left = resultPos.left - (ship.health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                                    shipElem.style.top = resultPos.top + (ship.health - 1) * CELL_WIDTH / 2 + 2 + 'px';
+                                } else {
+                                    shipElem.style.left = resultPos.left + 2 + 'px';
+                                    shipElem.style.top = resultPos.top + 2 + 'px';
+                                }
+                            } else {
+                                shipElem.classList.add("error-color");
+
+                                for (let k = 0; k < ship.cells.length; k++)
+                                    field[0].matrix[ship.cells[k][0]][ship.cells[k][1]] = 1;
+
+                                setTimeout(function () {
+                                    shipElem.classList.remove("error-color");
+                                }, 500);
+                            }
+                        };
+                    }
+
+                    // placing ship at the matrix
                     for (let k = 0; k < i; k++) {
                         this.matrix[x][y] = 1;
                         ship.cells.push([x, y]);
 
                         // getting ship number in list
-                        this.ship_cover[x][y] = currentShipId;
+                        this.ship_cover[x][y] = shipId;
 
                         if (showShips) {
                             let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="${this.owner}"]`);
@@ -155,7 +240,7 @@ window.onload = (event) => {
                         y += DELTA_Y[direction];
                     }
 
-                    this.ships[currentShipId++] = ship;
+                    this.ships[shipId++] = ship;
                 }
             }
         }
@@ -281,6 +366,26 @@ window.onload = (event) => {
         }
 
         clearField() {
+            if (this.owner === 0) {
+                // returning all ships to the start position
+
+                let ids = [
+                    "ship-1-1", "ship-1-2", "ship-1-3", "ship-1-4",
+                    "ship-2-1", "ship-2-2", "ship-2-3",
+                    "ship-3-1", "ship-3-2",
+                    "ship-4-1"
+                ];
+
+                ids.forEach((id) => {
+                    let ship = document.getElementById(id);
+                    console.log(id, ship);
+                    ship.style = '';
+                    let to = document.getElementById(`ships-row-${id[5]}`);
+                    to.appendChild(ship);
+                    // ship.remove();
+                });
+            }
+
             for (let i = 0; i < 10; i++) {
                 for (let j = 0; j < 10; j++) {
                     let cell = document.querySelector(`[data-x="${i}"][data-y="${j}"][data-owner="${this.owner}"]`);
@@ -296,7 +401,7 @@ window.onload = (event) => {
     }
 
     let field = [new Field(0), new Field(1)];
-    field[1].createField(0);
+    field[1].createRandomField(0);
     // field[0].isShipsVisible = true;
     // field[0].createField(1);
 
@@ -377,8 +482,8 @@ window.onload = (event) => {
         field[1].clearField();
 
         field = [new Field(0), new Field(1)];
-        field[0].createField(1);
-        field[1].createField(0);
+        field[0].createRandomField(0);
+        field[1].createRandomField(0);
         setStatus("Ваш ход.");
     }
     document.getElementById('button-reload').onclick = createNewMap;
@@ -603,19 +708,19 @@ window.onload = (event) => {
 
         let horizontalShift = Math.floor((X - shipCoords.left) / CELL_WIDTH);
         let verticalShift = Math.floor((Y - shipCoords.top) / CELL_WIDTH);
-
-        let shipId = dragObject.elem.getAttribute("data-id");
-        let ship = {
-            health: SHIPS_HEALTH[shipId],
-            cells: [],
-        }
-
+        
         let x = dropElem.getAttribute("data-x") - verticalShift,
-            y = dropElem.getAttribute("data-y") - horizontalShift;
+        y = dropElem.getAttribute("data-y") - horizontalShift;
         let cellUnderMouse = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="0"]`);
         if (!cellUnderMouse || dropElem.getAttribute("data-owner") == 1) {
             DragManager.onDragCancel(dragObject);
             return;
+        }
+        
+        let shipId = dragObject.elem.getAttribute("data-id");
+        let ship = {
+            health: SHIPS_HEALTH[shipId],
+            cells: [],
         }
 
         let resultPos = getCoords(cellUnderMouse);
