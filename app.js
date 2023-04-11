@@ -320,7 +320,7 @@ window.onload = (event) => {
                 3 - destroyed ship
             */
 
-            if (x < 0 || x >= 10 || y < 0 || y >= 10) {
+            if (x < 0 || x >= 10 || y < 0 || y >= 10 || !this.ships_remained) {
                 return 0;
             }
 
