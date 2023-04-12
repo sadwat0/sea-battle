@@ -20,7 +20,7 @@
         </div>
         
         <div class="battlefields">
-            <div class="ships-collection" id="ships_collection">
+            <div class="ships-collection" id="ships-collection">
                 <ul class="initial-ships">
                     <li class="ships-row" id="ships-row-4">
                         <div class="ship ship-4 draggable" data-id="9" id="ship-4-1"></div>
@@ -43,6 +43,34 @@
                 </ul>
             </div>
 
+
+            <div class="battlefield-table ships-stats" style="visibility: hidden; margin-left: -300px;" id="our-stats-table">
+                <p>Ваши корабли:</p>
+                <div class="ships-collection" id="ships-collection-our">
+                    <ul class="initial-ships">
+                        <li class="ships-row">
+                            <div class="ship ship-4" id="our-stat-ship-9"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-3" id="our-stat-ship-7"></div>
+                            <div class="ship ship-3" id="our-stat-ship-8"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-2" id="our-stat-ship-4"></div>
+                            <div class="ship ship-2" id="our-stat-ship-5"></div>
+                            <div class="ship ship-2" id="our-stat-ship-6"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-1" id="our-stat-ship-0"></div>
+                            <div class="ship ship-1" id="our-stat-ship-1"></div>
+                            <div class="ship ship-1" id="our-stat-ship-2"></div>
+                            <div class="ship ship-1" id="our-stat-ship-3"></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+
             <div class="battlefield" id="self-field">
                 <div class="battlefield-table" id="self-table">
                 </div>
@@ -62,23 +90,23 @@
             </div>
 
 
-            <div class="battlefield-table ships-stats">
+            <div class="battlefield-table ships-stats" id="enemy-stats-table">
                 <p>Оставшиеся корабли противника:</p>
-                <div class="ships-collection" id="ships_collection">
+                <div class="ships-collection" id="ships-collection">
                     <ul class="initial-ships">
-                        <li class="ships-row" id="ships-row-4">
+                        <li class="ships-row">
                             <div class="ship ship-4" id="stat-ship-9"></div>
                         </li>
-                        <li class="ships-row" id="ships-row-3">
+                        <li class="ships-row">
                             <div class="ship ship-3" id="stat-ship-7"></div>
                             <div class="ship ship-3" id="stat-ship-8"></div>
                         </li>
-                        <li class="ships-row" id="ships-row-2">
+                        <li class="ships-row">
                             <div class="ship ship-2" id="stat-ship-4"></div>
                             <div class="ship ship-2" id="stat-ship-5"></div>
                             <div class="ship ship-2" id="stat-ship-6"></div>
                         </li>
-                        <li class="ships-row" id="ships-row-1">
+                        <li class="ships-row">
                             <div class="ship ship-1" id="stat-ship-0"></div>
                             <div class="ship ship-1" id="stat-ship-1"></div>
                             <div class="ship ship-1" id="stat-ship-2"></div>
@@ -95,6 +123,9 @@
             </button>
             <button class="button green-button" id="button-reload">
                 Сгенерировать новую случайную карту.
+            </button>
+            <button class="button green-button" id="button-new-game" style="visibility: hidden;">
+                Новая игра.
             </button>
         </div>
         

@@ -70,10 +70,13 @@ window.onload = (event) => {
     function updatePlacedShips(cnt) {
         placedShips = cnt;
         let elem = document.getElementById("enemy-field"); 
-        if (placedShips == 10)
+        if (placedShips == 10) {
             elem.removeAttribute('disabled');
-        else
+            setStatus("Ваш ход.");
+        } else {
             elem.setAttribute('disabled', '');
+            setStatus("Расставьте корабли.");
+        }
     }
 
     /* --- Main game --- */
@@ -336,6 +339,8 @@ window.onload = (event) => {
                         elem.style.cursor = '';
                         elem.onclick = (function() {});
                     }
+                    document.getElementById("our-stats-table").style.visibility = 'visible';
+                    document.getElementById("enemy-stats-table").style.visibility = 'visible';
                 }
 
                 gameStarted = true;
@@ -381,12 +386,15 @@ window.onload = (event) => {
 
                     if (this.owner === 1) {
                         document.getElementById(`stat-ship-${shipId}`).classList.add('died-stats-ship');
+                    } else {
+                        document.getElementById(`our-stat-ship-${shipId}`).classList.add('died-stats-ship');
                     }
 
                     this.ships_remained--;
 
                     if (this.ships_remained === 0) {
                         setStatus(`Победил ${(this.owner ? "игрок" : "компьютер")}.`);
+                        document.getElementById('button-new-game').style.visibility = "visible";
                     }
 
                     return 3;
@@ -411,6 +419,7 @@ window.onload = (event) => {
                 ids.forEach((id) => {
                     let ship = document.getElementById(id);
                     ship.style = '';
+                    ship.classList.add('draggable');
                     let to = document.getElementById(`ships-row-${id[5]}`);
                     to.appendChild(ship);
                     // ship.remove();
@@ -463,16 +472,19 @@ window.onload = (event) => {
                 if (pastBotStep[2] == 0) {
                     possibleSteps = [
                         [pastBotStep[0] - 1, pastBotStep[1]],
-                        [pastBotStep[0] + 1, pastBotStep[1]],
+                        [pastBotStep[0] + 1, pastBotStep[1]]
+                    ];
+                } else if (pastBotStep[2] == 1) {
+                    possibleSteps = [
                         [pastBotStep[0], pastBotStep[1] - 1],
-                        [pastBotStep[0], pastBotStep[1] + 1]
+                        [pastBotStep[0], pastBotStep[1] + 1],
                     ];
                 } else {
                     possibleSteps = [
                         [pastBotStep[0], pastBotStep[1] - 1],
                         [pastBotStep[0], pastBotStep[1] + 1],
                         [pastBotStep[0] - 1, pastBotStep[1]],
-                        [pastBotStep[0] + 1, pastBotStep[1]]
+                        [pastBotStep[0] + 1, pastBotStep[1]],
                     ];
                 }
 
@@ -485,7 +497,9 @@ window.onload = (event) => {
 
                     if (res == 2) {
                         pastBotSteps.push([possibleSteps[i][0], possibleSteps[i][1],
-                            (pastBotStep[2] == -1 ? (pastBotStep[2] >= 2 ? 1 : 0) : pastBotStep[2])]);
+                            (pastBotStep[2] == -1 ? (i < 2) : pastBotStep[2])]);
+                    } else if (res == 3) {
+                        pastBotSteps = [];
                     }
                 }
 
@@ -502,7 +516,7 @@ window.onload = (event) => {
         }
     });
 
-    setStatus("Ваш ход.");
+    setStatus("Расставьте корабли.");
 
     /* --- Some functions --- */
     function changeShipsVisibility() {
@@ -511,6 +525,14 @@ window.onload = (event) => {
     document.getElementById('button-hide').onclick = changeShipsVisibility;
 
     function createNewMap() {
+        document.getElementById('button-new-game').visibility = 'hidden';
+        document.getElementById("our-stats-table").style.visibility = 'hidden';
+        document.getElementById("enemy-stats-table").style.visibility = 'hidden';
+        for (let shipId = 0; shipId < 10; shipId++) {
+            document.getElementById(`our-stat-ship-${shipId}`).classList.remove('died-stats-ship');
+            document.getElementById(`stat-ship-${shipId}`).classList.remove('died-stats-ship');
+        }
+        
         field[0].clearField();
         field[1].clearField();
 
@@ -521,6 +543,24 @@ window.onload = (event) => {
         setStatus("Ваш ход.");
     }
     document.getElementById('button-reload').onclick = createNewMap;
+
+    function startNewGame() {
+        document.getElementById('button-new-game').visibility = 'hidden';
+        document.getElementById("our-stats-table").style.visibility = 'hidden';
+        document.getElementById("enemy-stats-table").style.visibility = 'hidden';
+        for (let shipId = 0; shipId < 10; shipId++) {
+            document.getElementById(`our-stat-ship-${shipId}`).classList.remove('died-stats-ship');
+            document.getElementById(`stat-ship-${shipId}`).classList.remove('died-stats-ship');
+        }
+
+        field[0].clearField();
+        field[1].clearField();
+
+        field = [new Field(0), new Field(1)];
+        field[1].createRandomField(0);
+        updatePlacedShips(0);
+    }
+    document.getElementById('button-new-game').onclick = startNewGame;
 
 
     /* --- Dragable ships --- */
