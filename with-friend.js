@@ -938,12 +938,7 @@ window.onload = (event) => {
         var cand = e.candidate;
         if (!cand) {
             console.log('iceGatheringState complete\n', pc.localDescription.sdp);
-            let elem = document.getElementById('key-input');
-            elem.value = JSON.stringify(pc.localDescription);
-            elem.select();
-            elem.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(elem.value);
-            elem.value = '';
+            localOffer.value = JSON.stringify(pc.localDescription);
         } else {
             console.log(cand.candidate);
         }
@@ -969,7 +964,7 @@ window.onload = (event) => {
             }
         }).catch(errHandler);
     }
-    document.getElementById('copy-key').onclick = function () {
+    localOfferSet.onclick = function () {
         if (chatEnabled) {
             _chatChannel = pc.createDataChannel('chatChannel');
             // _fileChannel.binaryType = 'arraybuffer';
@@ -977,21 +972,13 @@ window.onload = (event) => {
         }
         pc.createOffer().then(des => {
             console.log('createOffer ok ');
-            document.getElementById('copy-key').innerHTML = 'Скопировано!';
-            setTimeout(function () {
-                document.getElementById('copy-key').innerHTML = 'Скопировать ключ.';
-            }, 500);
-
             pc.setLocalDescription(des).then(() => {
                 setTimeout(function () {
                     if (pc.iceGatheringState == "complete") {
                         return;
                     } else {
                         console.log('after GetherTimeout');
-                        let text = JSON.stringify(pc.localDescription);
-                        console.log(text);
-
-                        
+                        localOffer.value = JSON.stringify(pc.localDescription);
                     }
                 }, 2000);
                 console.log('setLocalDescription ok');
@@ -1018,7 +1005,6 @@ window.onload = (event) => {
             } else if (elem.type === "start-number") {
                 let otherNumber = elem.startNumber;
                 currentStep = (myNumber < otherNumber ? 1 : 0);
-                setStatus(currentStep ? "Ход противника." : "Ваш ход.");
                 console.log(myNumber, otherNumber, currentStep);
             } else if (elem.type === "attack-res") {
                 messageResult = elem;
