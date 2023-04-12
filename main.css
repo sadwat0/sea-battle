@@ -18,6 +18,10 @@ body {
     /* position: absolute; */
     z-index: -1;
 }
+.header p {
+    margin-top: 18px;
+    margin-left: 20px;
+}
 
 .status {
     margin-top: 10px;

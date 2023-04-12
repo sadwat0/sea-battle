@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battleships</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div class="game-wrap">
+        <div class="header" style="display: flex;">
+            <div class="status">
+                <div class="status-message" id="status-message">
+                    Loading...
+                </div>
+            </div>
+
+            <p>Игра с другом.</p>
+            <p><a href="with-bot.html">Поиграть с ботом</a></p>
+        </div>
+        
+        <div class="battlefields">
+            <div class="ships-collection" id="ships-collection">
+                <ul class="initial-ships">
+                    <li class="ships-row" id="ships-row-4">
+                        <div class="ship ship-4 draggable" data-id="9" id="ship-4-1"></div>
+                    </li>
+                    <li class="ships-row" id="ships-row-3">
+                        <div class="ship ship-3 draggable" data-id="7" id="ship-3-1"></div>
+                        <div class="ship ship-3 draggable" data-id="8" id="ship-3-2"></div>
+                    </li>
+                    <li class="ships-row" id="ships-row-2">
+                        <div class="ship ship-2 draggable" data-id="4" id="ship-2-1"></div>
+                        <div class="ship ship-2 draggable" data-id="5" id="ship-2-2"></div>
+                        <div class="ship ship-2 draggable" data-id="6" id="ship-2-3"></div>
+                    </li>
+                    <li class="ships-row" id="ships-row-1">
+                        <div class="ship ship-1 draggable" data-id="0" id="ship-1-1"></div>
+                        <div class="ship ship-1 draggable" data-id="1" id="ship-1-2"></div>
+                        <div class="ship ship-1 draggable" data-id="2" id="ship-1-3"></div>
+                        <div class="ship ship-1 draggable" data-id="3" id="ship-1-4"></div>
+                    </li>
+                </ul>
+            </div>
+
+
+            <div class="battlefield-table ships-stats" style="visibility: hidden; margin-left: -300px;" id="our-stats-table">
+                <p>Ваши корабли:</p>
+                <div class="ships-collection" id="ships-collection-our">
+                    <ul class="initial-ships">
+                        <li class="ships-row">
+                            <div class="ship ship-4" id="our-stat-ship-9"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-3" id="our-stat-ship-7"></div>
+                            <div class="ship ship-3" id="our-stat-ship-8"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-2" id="our-stat-ship-4"></div>
+                            <div class="ship ship-2" id="our-stat-ship-5"></div>
+                            <div class="ship ship-2" id="our-stat-ship-6"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-1" id="our-stat-ship-0"></div>
+                            <div class="ship ship-1" id="our-stat-ship-1"></div>
+                            <div class="ship ship-1" id="our-stat-ship-2"></div>
+                            <div class="ship ship-1" id="our-stat-ship-3"></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+
+            <div class="battlefield" id="self-field">
+                <div class="battlefield-table" id="self-table"></div>
+            </div>
+
+            <div class="battlefield" id="enemy-field" disabled>
+                <div class="battlefield-table" id="enemy-table"></div>
+            </div>
+
+
+            <div class="battlefield-table ships-stats" id="enemy-stats-table" style="visibility: hidden;">
+                <p>Оставшиеся корабли противника:</p>
+                <div class="ships-collection" id="ships-collection">
+                    <ul class="initial-ships">
+                        <li class="ships-row">
+                            <div class="ship ship-4" id="stat-ship-9"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-3" id="stat-ship-7"></div>
+                            <div class="ship ship-3" id="stat-ship-8"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-2" id="stat-ship-4"></div>
+                            <div class="ship ship-2" id="stat-ship-5"></div>
+                            <div class="ship ship-2" id="stat-ship-6"></div>
+                        </li>
+                        <li class="ships-row">
+                            <div class="ship ship-1" id="stat-ship-0"></div>
+                            <div class="ship ship-1" id="stat-ship-1"></div>
+                            <div class="ship ship-1" id="stat-ship-2"></div>
+                            <div class="ship ship-1" id="stat-ship-3"></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="button green-button" id="button-hide">
+                Показать/скрыть корабли противника.
+            </button>
+            <button class="button green-button" id="button-reload">
+                Сгенерировать новую случайную карту.
+            </button>
+            <button class="button green-button" id="button-new-game" style="visibility: hidden;">
+                Новая игра.
+            </button>
+        </div>
+        
+        <div class="ship ship-1 green-ship hidden" id="green-ship-1"></div>
+        <div class="ship ship-2 green-ship hidden" id="green-ship-2"></div>
+        <div class="ship ship-3 green-ship hidden" id="green-ship-3"></div>
+        <div class="ship ship-4 green-ship hidden" id="green-ship-4"></div>
+    </div>
+
+    <div>
+        <p>
+            Local
+            <textarea rows="4" cols="50" id=localOffer></textarea>
+            <button id=localOfferSet>CreateOffer</button>
+        </p>
+    </div>
+    <div>
+        <p>
+            Remote
+            <textarea id="remoteOffer" rows="4" cols="50" placeholder="Paste remote SDP"></textarea>
+            <button id=remoteOfferGot>Answer</button>
+        </p>
+    </div>
+    <div id="chat" style="overflow:scroll;"></div>
+    <div>
+        <br><br>
+        <form action="" onsubmit="event.preventDefault();" id="msg-form">
+            <input id=sendTxt type="text" name="" placeholder="chat here" size="50">
+            <button type="submit">send</button>
+        </form>
+    </div>
+    
+    <script src="with-friend.js"></script>
+</body>
+</html>
