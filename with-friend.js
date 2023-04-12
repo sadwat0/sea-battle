@@ -6,13 +6,23 @@ const SHIPS_HEALTH = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4];
 const DELTA_X = [1, 0], DELTA_Y = [0, 1]; // from direction get shift
 
 window.onload = (event) => {
+    let currentStep = 0; // 0 - this player, 1 - enemy
+    function updateAttackingField() {
+        if (currentStep === 0) {
+            document.getElementById("enemy-field").removeAttribute('disabled'); 
+            document.getElementById("self-field").setAttribute('disabled', ''); 
+        } else {
+            document.getElementById("enemy-field").setAttribute('disabled', ''); 
+            document.getElementById("self-field").removeAttribute('disabled'); 
+        }
+    }
+
     function randomNumber(a, b) { // [a; b)
         return Math.floor(Math.random() * (b - a) + a)
     }
 
-    let status_object = document.getElementById('status-message');
     function setStatus(status) {
-        status_object.innerHTML = status;
+        document.getElementById('status-message').innerHTML = status;
     }
 
     /* --- Creating empty tables --- */
@@ -331,21 +341,6 @@ window.onload = (event) => {
                 return 0; // not our step
             }
 
-            if (this.owner === 1) {
-                if (!gameStarted) {
-                    for (let i = 0; i < 10; i++) {
-                        let elem = document.querySelector(`[data-id="${i}"]`);
-                        elem.classList.remove('draggable');
-                        elem.style.cursor = '';
-                        elem.onclick = (function() {});
-                    }
-                    document.getElementById("our-stats-table").style.visibility = 'visible';
-                    document.getElementById("enemy-stats-table").style.visibility = 'visible';
-                }
-
-                gameStarted = true;
-            }
-
             let state = this.matrix[x][y];
             if (state !== 0 && state !== 1) {
                 return 0; // already attacked cell
@@ -357,6 +352,8 @@ window.onload = (event) => {
                 cell.classList.add('missed-cell');
                 this.matrix[x][y] = 2;
                 currentStep ^= 1;
+                setStatus(currentStep ? "Ход противника." : "Ваш ход.");
+                updateAttackingField();
 
                 return 1;
             } else {
@@ -445,83 +442,129 @@ window.onload = (event) => {
     }
 
     let field = [new Field(0), new Field(1)];
-    field[1].createRandomField(0);
     setStatus("Расставьте корабли.");
-
-    let currentStep = 0; // 0 - this player, 1 - enemy
-    let pastBotSteps = [];
 
     // Detecting all player clicks
     const enemy_tbody = document.querySelector('#enemy-table');
+    let attackX = -1, attackY = -1;
+    let messageResult;
     enemy_tbody.addEventListener('click', function (e) {
         const cell = e.target.closest('td');
         if (!cell) return; // not clicked on a cell
 
         let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
-        field[1].attack(x, y);
+        console.log(`trying to attack (${x}, ${y})`);
+        if (currentStep === 0) {
+            attackX = x, attackY = y;
+            let attackObject = {
+                type: "attack",
+                pos_x: x,
+                pos_y: y
+            };
 
-        // Bot needs to attack too
-        while (currentStep == 1 && field[0].ships_remained && field[1].ships_remained) {
-            while (currentStep == 1 && pastBotSteps.length > 0) {
-                let attacked = false;
-
-                let pastBotStep = pastBotSteps[pastBotSteps.length - 1];
-                let possibleSteps = [];
-                if (pastBotStep[2] == 0) {
-                    possibleSteps = [
-                        [pastBotStep[0] - 1, pastBotStep[1]],
-                        [pastBotStep[0] + 1, pastBotStep[1]]
-                    ];
-                } else if (pastBotStep[2] == 1) {
-                    possibleSteps = [
-                        [pastBotStep[0], pastBotStep[1] - 1],
-                        [pastBotStep[0], pastBotStep[1] + 1],
-                    ];
-                } else {
-                    possibleSteps = [
-                        [pastBotStep[0], pastBotStep[1] - 1],
-                        [pastBotStep[0], pastBotStep[1] + 1],
-                        [pastBotStep[0] - 1, pastBotStep[1]],
-                        [pastBotStep[0] + 1, pastBotStep[1]],
-                    ];
-                }
-
-                for (let i = 0; i < possibleSteps.length; i++) {
-                    // if we attacked already it's not our turn and we don't attack again, so we don't need to break from cycle
-                    let res = field[0].attack(possibleSteps[i][0], possibleSteps[i][1]);
-                    if (res > 0) {
-                        attacked = true;
-                    }
-
-                    if (res == 2) {
-                        pastBotSteps.push([possibleSteps[i][0], possibleSteps[i][1],
-                            (pastBotStep[2] == -1 ? (i < 2) : pastBotStep[2])]);
-                    } else if (res == 3) {
-                        pastBotSteps = [];
-                    }
-                }
-
-                if (!attacked) {
-                    pastBotSteps.pop();
-                }
-            }
-
-            let x = randomNumber(0, 10), y = randomNumber(0, 10);
-            let res = field[0].attack(x, y);
-            if (res == 2) {
-                pastBotSteps.push([x, y, -1]);
-            }
+            let jsonMessage = JSON.stringify(attackObject);
+            console.log(jsonMessage);
+            sendMessage(jsonMessage);
         }
     });
+
+    function enemyAttack(x, y) {
+        if (currentStep !== 1 || placedShips !== 10) {
+            let res_object = {
+                type: "attack-res",
+                value: -1
+            };
+            return JSON.stringify(res_object);
+        }
+
+        if (!gameStarted) {
+            for (let i = 0; i < 10; i++) {
+                let elem = document.querySelector(`[data-id="${i}"]`);
+                elem.classList.remove('draggable');
+                elem.style.cursor = '';
+                elem.onclick = (function () { });
+            }
+            document.getElementById("our-stats-table").style.visibility = 'visible';
+            document.getElementById("enemy-stats-table").style.visibility = 'visible';
+        }
+
+        gameStarted = true;
+
+        let res_object = {
+            type: "attack-res",
+            value: field[0].attack(x, y)
+        }
+
+        if (res_object.value >= 2) {
+            res_object.shipId = field[0].ship_cover[x][y];
+            res_object.cells = field[0].ships[res_object.shipId].cells;
+        }
+
+        return JSON.stringify(res_object);
+    }
+    function ourAttack(val) {
+        if (attackX === -1 || val <= 0 || currentStep !== 0) return;
+
+        if (!gameStarted) {
+            for (let i = 0; i < 10; i++) {
+                let elem = document.querySelector(`[data-id="${i}"]`);
+                elem.classList.remove('draggable');
+                elem.style.cursor = '';
+                elem.onclick = (function () { });
+            }
+            document.getElementById("our-stats-table").style.visibility = 'visible';
+            document.getElementById("enemy-stats-table").style.visibility = 'visible';
+        }
+
+        gameStarted = true;
+
+        let cell = document.querySelector(`[data-x="${attackX}"][data-y="${attackY}"][data-owner="1"]`);
+        if (val === 1) {
+            cell.classList.add('missed-cell');
+            currentStep = 1;
+            setStatus(currentStep ? "Ход противника." : "Ваш ход.");
+            updateAttackingField();
+        } else {
+            cell.classList.add('died-ship-cell')
+
+            if (val === 3) {
+                let shipId = messageResult.shipId;
+                let cells = messageResult.cells;
+
+                for (let i = 0; i < cells.length; i++) {
+                    let p = cells[i];
+
+                    for (let x = Math.max(0, p[0] - 1); x <= Math.min(9, p[0] + 1); x++) {
+                        for (let y = Math.max(0, p[1] - 1); y <= Math.min(9, p[1] + 1); y++) {
+                            let cell = document.querySelector(`[data-x="${x}"][data-y="${y}"][data-owner="1"]`);
+                            cell.classList.add('died-cell');
+                        }
+                    }
+                }
+
+                for (let i = 0; i < cells.length; i++) {
+                    let p = cells[i];
+                    let cell = document.querySelector(`[data-x="${p[0]}"][data-y="${p[1]}"][data-owner="1"]`);
+                    cell.classList.remove('died-cell');
+                }
+
+                document.getElementById(`stat-ship-${shipId}`).classList.add('died-stats-ship');
+
+                field[1].ships_remained--;
+
+                if (field[1].ships_remained === 0) {
+                    setStatus(`Вы победили!`);
+                    currentStep = 1;
+                    sendMessage(JSON.stringify({ type: "game-ended" }));
+                    document.getElementById('button-new-game').style.visibility = "visible";
+                }
+            }
+        }
+    }
 
     setStatus("Расставьте корабли.");
 
     /* --- Some functions --- */
-    function changeShipsVisibility() {
-        field[1].changeShipsVisibility();
-    }
-    document.getElementById('button-hide').onclick = changeShipsVisibility;
-
     function createNewMap() {
         document.getElementById('button-new-game').visibility = 'hidden';
         document.getElementById("our-stats-table").style.visibility = 'hidden';
@@ -543,6 +586,7 @@ window.onload = (event) => {
     document.getElementById('button-reload').onclick = createNewMap;
 
     function startNewGame() {
+        document.getElementById("self-field").removeAttribute('disabled'); 
         document.getElementById('button-new-game').visibility = 'hidden';
         document.getElementById("our-stats-table").style.visibility = 'hidden';
         document.getElementById("enemy-stats-table").style.visibility = 'hidden';
@@ -555,23 +599,13 @@ window.onload = (event) => {
         field[1].clearField();
 
         field = [new Field(0), new Field(1)];
-        field[1].createRandomField(0);
         updatePlacedShips(0);
     }
     document.getElementById('button-new-game').onclick = startNewGame;
-
+    
 
     /* --- Dragable ships --- */
     let DragManager = new function () {
-        /**
-         * составной объект для хранения информации о переносе:
-         * {
-         *   elem - элемент, на котором была зажата мышь
-         *   avatar - аватар
-         *   downX/downY - координаты, на которых был mousedown
-         *   shiftX/shiftY - относительный сдвиг курсора от угла элемента
-         * }
-         */
         let dragObject = {};
         let self = this;
 
@@ -883,27 +917,14 @@ window.onload = (event) => {
     };
 
 
-
-
-    // WebRTC
+    // --- WebRTC init start ---
     var conf = { iceServers: [{ "urls": "stun:stun.l.google.com:19302" }] };
     var pc = new RTCPeerConnection(conf);
-    var chatEnabled = true,
-        _chatChannel,
-        bytesPrev = 0;
+    var chatEnabled = true, _chatChannel;
 
     function errHandler(err) {
         console.log(err);
     }
-
-    function sendMsg() {
-        var text = sendTxt.value;
-        chat.innerHTML = chat.innerHTML + "<pre class=sent>" + text + "</pre>";
-        _chatChannel.send(text);
-        sendTxt.value = "";
-        return false;
-    }
-    document.getElementById("msg-form").onsubmit = sendMsg;
 
     pc.ondatachannel = function (e) {
         if (e.channel.label == "chatChannel") {
@@ -917,7 +938,12 @@ window.onload = (event) => {
         var cand = e.candidate;
         if (!cand) {
             console.log('iceGatheringState complete\n', pc.localDescription.sdp);
-            localOffer.value = JSON.stringify(pc.localDescription);
+            let elem = document.getElementById('key-input');
+            elem.value = JSON.stringify(pc.localDescription);
+            elem.select();
+            elem.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(elem.value);
+            elem.value = '';
         } else {
             console.log(cand.candidate);
         }
@@ -943,7 +969,7 @@ window.onload = (event) => {
             }
         }).catch(errHandler);
     }
-    localOfferSet.onclick = function () {
+    document.getElementById('copy-key').onclick = function () {
         if (chatEnabled) {
             _chatChannel = pc.createDataChannel('chatChannel');
             // _fileChannel.binaryType = 'arraybuffer';
@@ -951,13 +977,21 @@ window.onload = (event) => {
         }
         pc.createOffer().then(des => {
             console.log('createOffer ok ');
+            document.getElementById('copy-key').innerHTML = 'Скопировано!';
+            setTimeout(function () {
+                document.getElementById('copy-key').innerHTML = 'Скопировать ключ.';
+            }, 500);
+
             pc.setLocalDescription(des).then(() => {
                 setTimeout(function () {
                     if (pc.iceGatheringState == "complete") {
                         return;
                     } else {
                         console.log('after GetherTimeout');
-                        localOffer.value = JSON.stringify(pc.localDescription);
+                        let text = JSON.stringify(pc.localDescription);
+                        console.log(text);
+
+                        
                     }
                 }, 2000);
                 console.log('setLocalDescription ok');
@@ -966,34 +1000,45 @@ window.onload = (event) => {
         }).catch(errHandler);
     }
 
-
+    let myNumber = 0;
     function chatChannel(e) {
         _chatChannel.onopen = function (e) {
             console.log('chat channel is open', e);
+
+            myNumber = randomNumber(0, 1e9);
+            console.log(myNumber);
+            sendMessage(`{ "type": "start-number", "startNumber": ${myNumber} }`);
         }
         _chatChannel.onmessage = function (e) {
-            chat.innerHTML = chat.innerHTML + "<pre>" + e.data + "</pre>"
+            let elem = JSON.parse(e.data);
+            console.log(elem);
+            if (elem.type === "attack") {
+                let attack_res = enemyAttack(elem.pos_x, elem.pos_y);
+                _chatChannel.send(attack_res);
+            } else if (elem.type === "start-number") {
+                let otherNumber = elem.startNumber;
+                currentStep = (myNumber < otherNumber ? 1 : 0);
+                setStatus(currentStep ? "Ход противника." : "Ваш ход.");
+                console.log(myNumber, otherNumber, currentStep);
+            } else if (elem.type === "attack-res") {
+                messageResult = elem;
+                ourAttack(elem.value);
+            } else if (elem.type === "game-ended") {
+                setStatus("Вы проиграли.");
+                currentStep = 0;
+            }
         }
         _chatChannel.onclose = function () {
             console.log('chat channel closed');
         }
     }
 
-    function Stats() {
-        pc.getStats(null, function (stats) {
-            for (var key in stats) {
-                var res = stats[key];
-                console.log(res.type, res.googActiveConnection);
-                if (res.type === 'googCandidatePair' &&
-                    res.googActiveConnection === 'true') {
-                    // calculate current bitrate
-                    var bytesNow = res.bytesReceived;
-                    console.log('bit rate', (bytesNow - bytesPrev));
-                    bytesPrev = bytesNow;
-                }
-            }
-        });
+    function sendMessage(text) {
+        _chatChannel.send(text);
     }
+
+    // --- WebRTC init end ---
+
 
 };
 

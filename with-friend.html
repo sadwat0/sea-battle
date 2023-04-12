@@ -111,9 +111,6 @@
         </div>
 
         <div class="buttons">
-            <button class="button green-button" id="button-hide">
-                Показать/скрыть корабли противника.
-            </button>
             <button class="button green-button" id="button-reload">
                 Сгенерировать новую случайную карту.
             </button>
@@ -128,27 +125,29 @@
         <div class="ship ship-4 green-ship hidden" id="green-ship-4"></div>
     </div>
 
-    <div>
+    <div class="server-buttons-container">
+        <button class="button green-button" id="copy-key" style="width: 150px;">
+            Скопировать ключ.
+        </button>
+        <form style="display: flex; flex-direction: row;" id="send-key">
+            <input type="text" placeholder="Вставьте ключ второго игрока." height="300" id="key-input">
+            <input type="submit" value="Отправить" style="margin-top: 4px; margin-left: 10px;">
+        </form>
+    </div>
+
+    <!-- <div>
         <p>
             Local
             <textarea rows="4" cols="50" id=localOffer></textarea>
             <button id=localOfferSet>CreateOffer</button>
         </p>
-    </div>
+    </div> -->
     <div>
         <p>
             Remote
             <textarea id="remoteOffer" rows="4" cols="50" placeholder="Paste remote SDP"></textarea>
             <button id=remoteOfferGot>Answer</button>
         </p>
-    </div>
-    <div id="chat" style="overflow:scroll;"></div>
-    <div>
-        <br><br>
-        <form action="" onsubmit="event.preventDefault();" id="msg-form">
-            <input id=sendTxt type="text" name="" placeholder="chat here" size="50">
-            <button type="submit">send</button>
-        </form>
     </div>
     
     <script src="with-friend.js"></script>

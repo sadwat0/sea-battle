@@ -229,3 +229,20 @@ div[disabled] {
     background: rgba(255, 0, 0, 0.15);
     border-color: rgb(230, 70, 70);
 }
+
+
+.server-buttons-container {
+    margin-left: 20px;
+}
+
+.server-buttons-container form {
+    width: 200px;
+    height: 31px;
+    margin-top: 10px;
+}
+
+.server-buttons-container #key-input {
+    padding: 1px 10px;
+    height: 31px;
+    width: 200px;
+}

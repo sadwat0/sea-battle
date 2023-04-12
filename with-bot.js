@@ -10,9 +10,8 @@ window.onload = (event) => {
         return Math.floor(Math.random() * (b - a) + a)
     }
 
-    let status_object = document.getElementById('status-message');
     function setStatus(status) {
-        status_object.innerHTML = status;
+        document.getElementById('status-message').innerHTML = status;
     }
 
     /* --- Creating empty tables --- */
