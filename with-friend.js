@@ -82,7 +82,8 @@ window.onload = (event) => {
         let elem = document.getElementById("enemy-field"); 
         if (placedShips == 10) {
             elem.removeAttribute('disabled');
-            setStatus("Ваш ход.");
+            if (currentStep) setStatus("Ход противника.");
+            else setStatus("Ваш ход.");
         } else {
             elem.setAttribute('disabled', '');
             setStatus("Расставьте корабли.");
@@ -453,7 +454,6 @@ window.onload = (event) => {
         if (!cell) return; // not clicked on a cell
 
         let x = cell.getAttribute("data-x"), y = cell.getAttribute("data-y");
-        console.log(`trying to attack (${x}, ${y})`);
         if (currentStep === 0) {
             attackX = x, attackY = y;
             let attackObject = {
@@ -463,7 +463,6 @@ window.onload = (event) => {
             };
 
             let jsonMessage = JSON.stringify(attackObject);
-            console.log(jsonMessage);
             sendMessage(jsonMessage);
         }
     });
@@ -580,8 +579,8 @@ window.onload = (event) => {
         field = [new Field(0), new Field(1)];
         field[0].createRandomField(0);
         field[1].createRandomField(0);
-        updatePlacedShips(10);
         setStatus("Ваш ход.");
+        updatePlacedShips(10);
     }
     document.getElementById('button-reload').onclick = createNewMap;
 
@@ -993,12 +992,12 @@ window.onload = (event) => {
             console.log('chat channel is open', e);
 
             myNumber = randomNumber(0, 1e9);
-            console.log(myNumber);
+            // console.log(myNumber);
             sendMessage(`{ "type": "start-number", "startNumber": ${myNumber} }`);
         }
         _chatChannel.onmessage = function (e) {
             let elem = JSON.parse(e.data);
-            console.log(elem);
+            // console.log(elem);
             if (elem.type === "attack") {
                 let attack_res = enemyAttack(elem.pos_x, elem.pos_y);
                 _chatChannel.send(attack_res);
