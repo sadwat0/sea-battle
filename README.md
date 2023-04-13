@@ -24,5 +24,5 @@
 
 ---
 
-<p align="left"><img src="pictures/1.png" alt="Game screenshot." width="275"/></p>
-<p align="left"><img src="pictures/2.png" alt="Game screenshot." width="275"/></p>
+<p align="left"><img src="pictures/1.png" alt="Game screenshot."/></p>
+<p align="left"><img src="pictures/2.png" alt="Game screenshot."/></p>
