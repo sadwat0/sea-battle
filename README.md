@@ -21,3 +21,8 @@
 
 Взаимодействие двух людей реализовано с помощью [serverless-webrtc](https://github.com/cjb/serverless-webrtc) чтобы не было сервера, 
 но из-за этого получается, что игрокам приходится делать больше действий.
+
+---
+
+<p align="left"><img src="pictures/1.png" alt="Game screenshot." width="275"/></p>
+<p align="left"><img src="pictures/2.png" alt="Game screenshot." width="275"/></p>
