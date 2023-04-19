@@ -125,19 +125,23 @@
         <div class="ship ship-4 green-ship hidden" id="green-ship-4"></div>
     </div>
 
-    <div>
-        <p>
-            Local
-            <textarea rows="4" cols="50" id=localOffer></textarea>
-            <button id=localOfferSet>CreateOffer</button>
-        </p>
-    </div>
-    <div>
-        <p>
-            Remote
-            <textarea id="remoteOffer" rows="4" cols="50" placeholder="Paste remote SDP"></textarea>
-            <button id=remoteOfferGot>Answer</button>
-        </p>
+    <div style="display: flex; flex-direction: row;">
+        <div>
+            <p>
+                Local
+                <textarea rows="4" cols="50" id=localOffer
+                    style="resize: none;"></textarea>
+                <button id=localOfferSet>CreateOffer</button>
+            </p>
+        </div>
+        <div style="margin-left: 70px;">
+            <p>
+                Remote
+                <textarea id="remoteOffer" rows="4" cols="50" placeholder="Paste remote SDP"
+                    style="resize: none;"></textarea>
+                <button id=remoteOfferGot>Answer</button>
+            </p>
+        </div>
     </div>
     
     <script src="with-friend.js"></script>
