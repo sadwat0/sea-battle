@@ -432,7 +432,6 @@ window.onload = (event) => {
             for (let i = 0; i < 10; i++) {
                 for (let j = 0; j < 10; j++) {
                     let cell = document.querySelector(`[data-x="${i}"][data-y="${j}"][data-owner="${this.owner}"]`);
-                    // cell.setAttribute('class', 'cell');
                     cell.classList.remove('died-cell');
                     cell.classList.remove('died-ship-cell');
                     cell.classList.remove('ship-cell');
@@ -446,8 +445,6 @@ window.onload = (event) => {
     let field = [new Field(0), new Field(1)];
     field[1].createRandomField(0);
     setStatus("Расставьте корабли.");
-    // field[0].isShipsVisible = true;
-    // field[0].createField(1);
 
     let currentStep = 0; // 0 - this player, 1 - enemy
     let pastBotSteps = [];
